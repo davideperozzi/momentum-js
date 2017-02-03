@@ -1,6 +1,3 @@
-/**
- * @type {Object}
- */
 momentum = {};
 
 /**
@@ -32,8 +29,7 @@ momentum.Coordinate.prototype.clone = function() {
 };
 
 /**
- * @public 
- * @return {momentum.Coordinate}
+ * @public
  */
 momentum.Coordinate.prototype.clamp = function(min, max) {
   this.x = Math.min(Math.max(this.x, min), max);
@@ -86,7 +82,7 @@ momentum.Element = function(optTarget) {
 
   /**
    * @private
-   * @type {BoundingRect}
+   * @type {ClientRect}
    */
   this.targetBounds_ = this.target_.getBoundingClientRect();
 
@@ -180,7 +176,7 @@ momentum.Element = function(optTarget) {
 
   /**
    * @private
-   * @type {!Function}
+   * @type {Function}
    */
   this.downCallback_ = null;
 
@@ -389,7 +385,7 @@ momentum.Element.prototype.getEventPosition_ = function(event) {
 
 /**
  * @private
- * @param {MouseEvent} event
+ * @param {Event} event
  */
 momentum.Element.prototype.handleUserDown_ = function(event) {
   var position = this.getEventPosition_(event);
@@ -434,7 +430,7 @@ momentum.Element.prototype.addTrackingPoint_ = function() {
 
 /**
  * @private
- * @param {MouseEvent} event
+ * @param {Event} event
  */
 momentum.Element.prototype.handleUserMove_ = function(event) {
   if (this.dragging_) {
@@ -477,7 +473,7 @@ momentum.Element.prototype.updateTrackingPoints_ = function() {
 
 /**
  * @private
- * @param {MouseEvent} event
+ * @param {Event} event
  */
 momentum.Element.prototype.handleUserUp_ = function(event) {
   if (this.dragging_) {
@@ -569,8 +565,8 @@ momentum.Element.prototype.positionUpdated_ = function() {
  * @return {number}
  */
 momentum.Element.prototype.getPrecisionNumber_ = function(num, precision) {
-  num = num.toString();
-  return parseFloat(num.substring(0, num.indexOf('.') + (1 + precision))) || 0;
+  number = num.toString();
+  return parseFloat(number.substring(0, number.indexOf('.') + (1 + precision))) || 0;
 };
 
 /**
@@ -604,6 +600,7 @@ momentum.Element.prototype.decelerate_ = function() {
 
 /**
  * @param {Function} callback
+ * @param {Object} ctx
  * @private
  */
 momentum.Element.prototype.requestAnimationFrame_ = function(callback, ctx) {
