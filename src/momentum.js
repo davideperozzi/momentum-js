@@ -1,4 +1,5 @@
 momentum = {};
+momentum.utils = {};
 
 /**
  * @struct
@@ -21,7 +22,7 @@ momentum.Coordinate = function(optX, optY) {
 };
 
 /**
- * @public 
+ * @public
  * @return {momentum.Coordinate}
  */
 momentum.Coordinate.prototype.clone = function() {
@@ -37,14 +38,14 @@ momentum.Coordinate.prototype.clamp = function(min, max) {
 };
 
 /**
- * @public 
+ * @public
  */
 momentum.Coordinate.prototype.clampX = function(min, max) {
   this.x = Math.min(Math.max(this.x, min), max);
 };
 
 /**
- * @public 
+ * @public
  */
 momentum.Coordinate.prototype.clampY = function(min, max) {
   this.y = Math.min(Math.max(this.y, min), max);
@@ -73,7 +74,7 @@ momentum.TrackingPoint = function(position) {
  * @constructor
  * @param {Element=} optTarget
  */
-momentum.Element = function(optTarget) {
+momentum.Handler = function(optTarget) {
   /**
    * @private
    * @type {Element}
@@ -108,6 +109,12 @@ momentum.Element = function(optTarget) {
    * @private
    * @type {momentum.Coordinate}
    */
+  this.lastPosition_ = new momentum.Coordinate();
+
+  /**
+   * @private
+   * @type {momentum.Coordinate}
+   */
   this.lastVelocity_ = new momentum.Coordinate();
 
   /**
@@ -115,7 +122,7 @@ momentum.Element = function(optTarget) {
    * @type {{
    *     minX: number,
    *     maxX: number,
-   *     minY: number, 
+   *     minY: number,
    *     maxY: number
    * }}
    */
@@ -219,8 +226,127 @@ momentum.Element = function(optTarget) {
 
 /**
  * @public
+ * @param {!Function} callback
+ * @param {Object=} optCtx
  */
-momentum.Element.prototype.init = function() {
+momentum.Handler.prototype.onMove = function(callback, optCtx) {
+  this.moveCallbacks_.push(callback.bind(optCtx || this));
+};
+
+/**
+ * @public
+ * @param {!Function} callback
+ * @param {Object=} optCtx
+ */
+momentum.Handler.prototype.onDown = function(callback, optCtx) {
+  this.downCallback_ = callback.bind(optCtx || this);
+};
+
+/**
+ * @public
+ * @param {number} friction
+ */
+momentum.Handler.prototype.setFriction = function(friction) {
+  this.friction_ = Math.min(Math.max(friction, 0), 1);
+};
+
+/**
+ * @public
+ * @param {number} threshold
+ */
+momentum.Handler.prototype.setThreshold = function(threshold) {
+  this.threshold_ = threshold;
+};
+
+/**
+ * @public
+ * @param {number} restitution
+ */
+momentum.Handler.prototype.setRestitution = function(restitution) {
+  this.restitution_ = Math.min(Math.max(restitution, 0), 1);
+};
+
+/**
+ * @public
+ * @param {number} maxVelocity
+ */
+momentum.Handler.prototype.setMaxVelocity = function(maxVelocity) {
+  this.maxVelocity_ = Math.max(maxVelocity, 0);
+};
+
+/**
+ * @public
+ * @return {number}
+ */
+momentum.Handler.prototype.getFriction = function() {
+  return this.friction_;
+};
+
+/**
+ * @public
+ * @return {number}
+ */
+momentum.Handler.prototype.getThreshold = function() {
+  return this.threshold_;
+};
+
+/**
+ * @public
+ * @return {number}
+ */
+momentum.Handler.prototype.getRestitution = function() {
+  return this.restitution_;
+};
+
+/**
+ * @public
+ * @return {number}
+ */
+momentum.Handler.prototype.getMaxVelocity = function() {
+  return this.maxVelocity_;
+};
+
+/**
+ * @public
+ * @return {Element}
+ */
+momentum.Handler.prototype.getTarget = function() {
+  return this.target_;
+};
+
+/**
+ * @public
+ * @param {boolean=} optUpdate
+ * @return {ClientRect}
+ */
+momentum.Handler.prototype.getTargetBounds = function(optUpdate) {
+  if (optUpdate) {
+    this.targetBounds_ = this.target_.getBoundingClientRect();
+  }
+
+  return this.targetBounds_;
+};
+
+/**
+ * @public
+ * @param {number} x
+ * @param {number} y
+ * @param {boolean=} optReset
+ */
+momentum.Handler.prototype.setPosition = function(x, y, optReset) {
+  this.position_.x = x;
+  this.position_.y = y;
+
+  if (optReset) {
+    this.lastPosition_.x = x;
+    this.lastPosition_.y = y;
+  }
+};
+
+/**
+ * @public
+ */
+momentum.Handler.prototype.init = function() {
   if ('ontouchstart' in window || navigator.msMaxTouchPoints) {
     this.target_.addEventListener('touchend', this.handleUserUp_.bind(this), false);
     this.target_.addEventListener('touchcancel', this.handleUserUp_.bind(this), false);
@@ -236,104 +362,12 @@ momentum.Element.prototype.init = function() {
 
 /**
  * @public
- * @param {!Function} callback
- * @param {Object=} optCtx
- */
-momentum.Element.prototype.onMove = function(callback, optCtx) {
-  this.moveCallbacks_.push(callback.bind(optCtx || this));
-};
-
-/**
- * @public
- * @param {!Function} callback
- * @param {Object=} optCtx
- */
-momentum.Element.prototype.onDown = function(callback, optCtx) {
-  this.downCallback_ = callback.bind(optCtx || this);
-};
-
-/**
- * @public
- * @param {number} friction
- */
-momentum.Element.prototype.setFriction = function(friction) {
-  this.friction_ = Math.min(Math.max(friction, 0), 1);
-};
-
-/**
- * @public
- * @param {number} threshold
- */
-momentum.Element.prototype.setThreshold = function(threshold) {
-  this.threshold_ = threshold;
-};
-
-/**
- * @public
- * @param {number} restitution
- */
-momentum.Element.prototype.setRestitution = function(restitution) {
-  this.restitution_ = Math.min(Math.max(restitution, 0), 1);
-};
-
-/**
- * @public
- * @param {number} maxVelocity
- */
-momentum.Element.prototype.setMaxVelocity = function(maxVelocity) {
-  this.maxVelocity_ = Math.max(maxVelocity, 0);
-};
-
-/**
- * @public
- * @return {number}
- */
-momentum.Element.prototype.getFriction = function() {
-  return this.friction_;
-};
-
-/**
- * @public
- * @return {number}
- */
-momentum.Element.prototype.getThreshold = function() {
-  return this.threshold_;
-};
-
-/**
- * @public
- * @return {number}
- */
-momentum.Element.prototype.getRestitution = function() {
-  return this.restitution_;
-};
-
-/**
- * @public
- * @return {number}
- */
-momentum.Element.prototype.getMaxVelocity = function() {
-  return this.maxVelocity_;
-};
-
-/**
- * @public
- * @param {number} x
- * @param {number} y
- */
-momentum.Element.prototype.setPosition = function(x, y) {
-  this.position_.x = x;
-  this.position_.y = y;
-};
-
-/**
- * @public
  * @param {number=} optMinX
  * @param {number=} optMaxX
  * @param {number=} optMinY
  * @param {number=} optMaxY
  */
-momentum.Element.prototype.setBounds = function(optMinX, optMaxX, optMinY, optMaxY) {
+momentum.Handler.prototype.setBounds = function(optMinX, optMaxX, optMinY, optMaxY) {
   this.bounds_.minX = optMinX || 0;
   this.bounds_.maxX = optMaxX || 0;
   this.bounds_.minY = optMinY || 0;
@@ -347,7 +381,8 @@ momentum.Element.prototype.setBounds = function(optMinX, optMaxX, optMinY, optMa
 /**
  * @public
  */
-momentum.Element.prototype.update = function() {
+momentum.Handler.prototype.update = function() {
+  this.targetBounds_ = this.target_.getBoundingClientRect();
   this.positionUpdated_();
 };
 
@@ -356,7 +391,7 @@ momentum.Element.prototype.update = function() {
  * @param {Element} element
  * @return {momentum.Coordinate}
  */
-momentum.Element.prototype.getRelativeElementPosition = function(element) {
+momentum.Handler.prototype.getRelativeElementPosition = function(element) {
   var bounds = element.getBoundingClientRect();
 
   return new momentum.Coordinate(
@@ -369,7 +404,7 @@ momentum.Element.prototype.getRelativeElementPosition = function(element) {
  * @param {Event} event
  * @return {momentum.Coordinate}
  */
-momentum.Element.prototype.getEventPosition_ = function(event) {
+momentum.Handler.prototype.getEventPosition_ = function(event) {
   var position = new momentum.Coordinate();
 
   if (event.hasOwnProperty('touches')) {
@@ -387,7 +422,7 @@ momentum.Element.prototype.getEventPosition_ = function(event) {
  * @private
  * @param {Event} event
  */
-momentum.Element.prototype.handleUserDown_ = function(event) {
+momentum.Handler.prototype.handleUserDown_ = function(event) {
   var position = this.getEventPosition_(event);
 
   if (this.downCallback_ && !this.downCallback_(position.x, position.y)) {
@@ -410,7 +445,7 @@ momentum.Element.prototype.handleUserDown_ = function(event) {
   this.collectTrackingPoints_();
 };
 
-momentum.Element.prototype.collectTrackingPoints_ = function() {
+momentum.Handler.prototype.collectTrackingPoints_ = function() {
   this.addTrackingPoint_();
   this.updateTrackingPoints_();
 
@@ -422,7 +457,7 @@ momentum.Element.prototype.collectTrackingPoints_ = function() {
 /**
  * @private
  */
-momentum.Element.prototype.addTrackingPoint_ = function() {
+momentum.Handler.prototype.addTrackingPoint_ = function() {
   this.trackingPoints_.push(
     new momentum.TrackingPoint(this.position_.clone())
   );
@@ -432,7 +467,7 @@ momentum.Element.prototype.addTrackingPoint_ = function() {
  * @private
  * @param {Event} event
  */
-momentum.Element.prototype.handleUserMove_ = function(event) {
+momentum.Handler.prototype.handleUserMove_ = function(event) {
   if (this.dragging_) {
     event.preventDefault();
     event.stopPropagation();
@@ -449,7 +484,7 @@ momentum.Element.prototype.handleUserMove_ = function(event) {
 /**
  * @private
  */
-momentum.Element.prototype.updateTrackingPoints_ = function() {
+momentum.Handler.prototype.updateTrackingPoints_ = function() {
   var timestamp = Date.now();
   var removeIndicies = [];
 
@@ -475,12 +510,12 @@ momentum.Element.prototype.updateTrackingPoints_ = function() {
  * @private
  * @param {Event} event
  */
-momentum.Element.prototype.handleUserUp_ = function(event) {
+momentum.Handler.prototype.handleUserUp_ = function(event) {
   if (this.dragging_) {
     this.dragging_ = false;
     this.allowDecelerating_ = true;
 
-    // Calculate the velocity the object reached before the user 
+    // Calculate the velocity the object reached before the user
     // released the trigger. Depending on the start time.
     var timeDelta = (Date.now() - this.startTime_) / 15;
 
@@ -490,15 +525,15 @@ momentum.Element.prototype.handleUserUp_ = function(event) {
     // Clamp velocities to the max value
     this.lastVelocity_.clamp(-this.maxVelocity_, this.maxVelocity_);
 
-    // Clear the start proeprties, so they won't mess up any 
+    // Clear the start proeprties, so they won't mess up any
     // further calculations
     this.clearStartProperties_();
 
-    // Clear previous tracking points. At this point all calculations which 
+    // Clear previous tracking points. At this point all calculations which
     // are including the tracking points should be already made.
     this.trackingPoints_ = [];
 
-    // Check if the velocity is greater than the threshold to enable 
+    // Check if the velocity is greater than the threshold to enable
     // the decelerating from the calculated velocity
     if (Math.abs(this.lastVelocity_.x) >= this.threshold_ ||
       Math.abs(this.lastVelocity_.y) >= this.threshold_) {
@@ -510,7 +545,7 @@ momentum.Element.prototype.handleUserUp_ = function(event) {
 /**
  * @private
  */
-momentum.Element.prototype.clearStartProperties_ = function() {
+momentum.Handler.prototype.clearStartProperties_ = function() {
   this.startPosition_.x = 0;
   this.startPosition_.y = 0;
   this.startTime_ = 0;
@@ -519,15 +554,16 @@ momentum.Element.prototype.clearStartProperties_ = function() {
 /**
  * @private
  */
-momentum.Element.prototype.applyBounds_ = function() {
+momentum.Handler.prototype.applyBounds_ = function() {
   if (this.hasBounds_) {
     if (this.hasBoundsX_) {
       this.position_.clampX(this.bounds_.minX, this.bounds_.maxX);
 
       // Handle bounce by inverting the velocity for each axis
       if (this.position_.x <= this.bounds_.minX ||
-        this.position_.x >= this.bounds_.maxX) {
-        this.lastVelocity_.x = (this.lastVelocity_.x <= 0 ? Math.abs(this.lastVelocity_.x) : -this.lastVelocity_.x) * this.restitution_;
+        this.position_.x >= this.bounds_.maxX &&
+        this.restitution_ > 0) {
+        this.lastVelocity_.x = (this.lastVelocity_.x * -1) * this.restitution_;
       }
     }
 
@@ -536,8 +572,9 @@ momentum.Element.prototype.applyBounds_ = function() {
 
       // Handle bounce by inverting the velocity for each axis
       if (this.position_.y <= this.bounds_.minY ||
-        this.position_.y >= this.bounds_.maxY) {
-        this.lastVelocity_.y = (this.lastVelocity_.y <= 0 ? Math.abs(this.lastVelocity_.y) : -this.lastVelocity_.y) * this.restitution_;
+        this.position_.y >= this.bounds_.maxY &&
+        this.restitution_ > 0) {
+        this.lastVelocity_.y = (this.lastVelocity_.y * -1) * this.restitution_;
       }
     }
   }
@@ -546,16 +583,21 @@ momentum.Element.prototype.applyBounds_ = function() {
 /**
  * @private
  */
-momentum.Element.prototype.positionUpdated_ = function() {
+momentum.Handler.prototype.positionUpdated_ = function() {
   this.applyBounds_();
 
-  for (var i = 0, len = this.moveCallbacks_.length; i < len; i++) {
-    this.moveCallbacks_[i](
-      this.position_.x,
-      this.position_.y,
-      this.lastVelocity_.x,
-      this.lastVelocity_.y
-    );
+  if (this.position_.x != this.lastPosition_.x || this.position_.y != this.lastPosition_.y) {
+    for (var i = 0, len = this.moveCallbacks_.length; i < len; i++) {
+      this.moveCallbacks_[i](
+        this.position_.x,
+        this.position_.y,
+        this.lastVelocity_.x,
+        this.lastVelocity_.y
+      );
+    }
+
+    this.lastPosition_.x = this.position_.x;
+    this.lastPosition_.y = this.position_.y;
   }
 };
 
@@ -564,7 +606,7 @@ momentum.Element.prototype.positionUpdated_ = function() {
  * @param {number} precision
  * @return {number}
  */
-momentum.Element.prototype.getPrecisionNumber_ = function(num, precision) {
+momentum.Handler.prototype.getPrecisionNumber_ = function(num, precision) {
   number = num.toString();
   return parseFloat(number.substring(0, number.indexOf('.') + (1 + precision))) || 0;
 };
@@ -572,7 +614,7 @@ momentum.Element.prototype.getPrecisionNumber_ = function(num, precision) {
 /**
  * @private
  */
-momentum.Element.prototype.decelerate_ = function() {
+momentum.Handler.prototype.decelerate_ = function() {
   if (!this.allowDecelerating_) {
     return;
   }
@@ -603,6 +645,286 @@ momentum.Element.prototype.decelerate_ = function() {
  * @param {Object} ctx
  * @private
  */
-momentum.Element.prototype.requestAnimationFrame_ = function(callback, ctx) {
+momentum.Handler.prototype.requestAnimationFrame_ = function(callback, ctx) {
   (window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame)(callback.bind(ctx));
+};
+
+/**
+ * @param {string=} optProp
+ * @return {string}
+ */
+momentum.utils.getVendor = function(optProp) {
+  var property = '';
+  var styles = window.getComputedStyle(document.documentElement, '');
+  var prefix = (Array.prototype.slice.call(styles).join('').match(/-(moz|webkit|ms)-/) ||
+         (styles.OLink === '' && ['', 'o']))[1];
+
+  if (prefix.length > 0 && optProp) {
+    property = optProp[0].toUpperCase() + optProp.substr(1);
+  }
+
+  return prefix[0].toUpperCase() + prefix.substr(1) + property;
+};
+
+/**
+ * @param {Element} element
+ * @param {string} style
+ * @param {boolean=} optVendorize
+ * @return {string}
+ */
+momentum.utils.getStyle = function(element, style, optVendorize) {
+  return window.getComputedStyle(element)[optVendorize ? momentum.utils.getVendor(style) : style];
+};
+
+/**
+ * @param {Element} element
+ * @param {string} style
+ * @param {string} property
+ * @param {boolean=} optVendorize
+ */
+momentum.utils.setStyle = function(element, property, value, optVendorize) {
+  element.style[property] = value;
+
+  if (optVendorize) {
+    element.style[momentum.utils.getVendor(property)] = value;
+  }
+};
+
+/**
+ * @param {Element} element
+ * @param {number} x
+ * @param {number} y
+ */
+momentum.utils.setTranslation = function(element, x, y) {
+  momentum.utils.setStyle(element, 'transform', 'translate3d(' + x + 'px,' + y + 'px,0)', true);
+};
+
+/**
+ * @constructpr
+ * @param {Element} element
+ * @param {{
+ *   container: (Element|undefined),
+ *   containerBounds: (boolean|undefined),
+ *   bounds: ({
+ *     x: number,
+ *     y: number,
+ *     width: number,
+ *     height: number
+ *   }|undefined),
+ *   anchorX: (number|undefined),
+ *   anchorY: (number|undefined),
+ *   threshold: (number|undefined),
+ *   restitution: (number|undefined),
+ *   maxVelocity: (number|undefined)
+ * }=} optConfig
+ */
+momentum.Draggable = function(element, optConfig) {
+  /**
+   * @private
+   * @type {Element}
+   */
+  this.element_ = element;
+
+  /**
+   * @private
+   * @type {ClientRect}
+   */
+  this.elementBounds_ = this.element_.getBoundingClientRect();
+
+  /**
+   * @private
+   * @type {momentum.Coordinate}
+   */
+  this.anchorPoint_ = new momentum.Coordinate(.5, .5);
+
+  /**
+   * @private
+   * @type {momentum.Coordinate}
+   */
+  this.positionOffset_ = new momentum.Coordinate();
+
+  /**
+   * @private
+   * @type {momentum.Coordinate}
+   */
+  this.startPosition_ = new momentum.Coordinate();
+
+  /**
+   * @pubic
+   * @type {Object}
+   */
+  this.config = optConfig || {};
+
+  /**
+   * @private
+   * @type {momentum.Handler}
+   */
+  this.handler_ = null;
+
+  /**
+   * Initialize self
+   */
+  this.init_();
+};
+
+/**
+ * @public
+ * @param {boolean=} optPreventHandler
+ */
+momentum.Draggable.prototype.update = function(optPreventHandler) {
+  optPreventHandler = optPreventHandler && optPreventHandler === true;
+
+  // Update anchor points
+  this.anchorPoint_.x = this.config.anchorX || this.anchorPoint_.x;
+  this.anchorPoint_.y = this.config.anchorY || this.anchorPoint_.y;
+
+  // Update element bounds and offsets
+  this.elementBounds_ = this.element_.getBoundingClientRect();
+  this.positionOffset_.x = this.elementBounds_.width * this.anchorPoint_.x;
+  this.positionOffset_.y = this.elementBounds_.height * this.anchorPoint_.y;
+
+  // Set start position
+  this.startPosition_.x = this.element_.offsetLeft;
+  this.startPosition_.y = this.element_.offsetTop;
+
+  var containerOffset = new momentum.Coordinate();
+  var parentElement = this.element_.parentElement;
+
+  while (parentElement) {
+    if (parentElement != this.handler_.getTarget()) {
+      var position = momentum.utils.getStyle(parentElement, 'position');
+
+      if (position == 'relative' || position == 'absolute') {
+        var bounds = parentElement.getBoundingClientRect();
+
+        if (bounds.left > containerOffset.x) {
+          containerOffset.x = bounds.left;
+        }
+
+        if (bounds.top > containerOffset.y) {
+          containerOffset.y = bounds.top;
+        }
+      }
+    }
+    else {
+      break;
+    }
+
+    parentElement = parentElement.parentElement;
+  }
+
+  this.startPosition_.x += containerOffset.x;
+  this.startPosition_.y += containerOffset.y;
+
+  if (!isNaN(this.config.restitution)) {
+    this.handler_.setRestitution(this.config.restitution);
+  }
+
+  if (!isNaN(this.config.friction)) {
+    this.handler_.setFriction(this.config.friction);
+  }
+
+  if (!isNaN(this.config.threshold)) {
+    this.handler_.setThreshold(this.config.threshold);
+  }
+
+  if (!isNaN(this.config.maxVelocity)) {
+    this.handler_.setMaxVelocity(this.config.maxVelocity);
+  }
+
+  if (this.config.bounds) {
+    this.handler_.setBounds(
+      this.config.bounds.x + this.positionOffset_.x,
+      this.config.bounds.x + this.config.bounds.width - this.positionOffset_.x,
+      this.config.bounds.y + this.positionOffset_.y,
+      this.config.bounds.y + this.config.bounds.height - this.positionOffset_.y
+    )
+  }
+  else if (this.config.containerBounds) {
+    var containerBounds = this.handler_.getTargetBounds(true);
+
+    this.handler_.setBounds(
+      this.positionOffset_.x, containerBounds.width - this.positionOffset_.x,
+      this.positionOffset_.y, containerBounds.height - this.positionOffset_.y
+    );
+  }
+
+  // Update handler
+  if ( ! optPreventHandler) {
+    this.handler_.update();
+  }
+};
+
+/**
+ * @private
+ */
+momentum.Draggable.prototype.init_ = function() {
+  // Setup handler
+  this.handler_ = new momentum.Handler(this.config.container);
+  this.handler_.onDown(this.handleDown_, this);
+  this.handler_.onMove(this.handleMove_, this);
+
+  // Update dragger only to set the initial position first, which
+  // will needs some values calculated in the update method.
+  this.update(true);
+
+  // Set the initial position
+  var initialPosition = this.handler_.getRelativeElementPosition(this.element_);
+
+  this.handler_.setPosition(
+    initialPosition.x + this.positionOffset_.x,
+    initialPosition.y + this.positionOffset_.y,
+    true
+  );
+
+  // Update the handler after the startposition was set. This will ensure
+  // that all bounds will be set properly.
+  this.handler_.update();
+
+  // Init handler
+  this.handler_.init();
+};
+
+/**
+ * @private
+ * @param {number} x
+ * @param {number} y
+ */
+momentum.Draggable.prototype.translate_ = function(x, y) {
+  x = x - this.positionOffset_.x - this.startPosition_.x;
+  y = y - this.positionOffset_.y - this.startPosition_.y;
+
+  momentum.utils.setTranslation(this.element_, x, y);
+};
+
+/**
+ * @private
+ * @param {number} x
+ * @param {number} y
+ * @return {boolean}
+ */
+momentum.Draggable.prototype.hitTest_ = function(x, y) {
+  var elementPosition = this.handler_.getRelativeElementPosition(this.element_);
+
+  return x >= elementPosition.x && x < elementPosition.x + this.elementBounds_.width &&
+         y >= elementPosition.y && y < elementPosition.y + this.elementBounds_.height;
+};
+
+/**
+ * @private
+ * @param {number} x
+ * @param {number} y
+ * @return {boolean}
+ */
+momentum.Draggable.prototype.handleDown_ = function(x, y) {
+  return this.hitTest_(x, y);
+};
+
+/**
+ * @private
+ * @param {number} x
+ * @param {number} y
+ */
+momentum.Draggable.prototype.handleMove_ = function(x, y) {
+  this.translate_(x, y);
 };
