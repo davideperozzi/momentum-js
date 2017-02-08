@@ -622,11 +622,13 @@ momentum.Handler.prototype.decelerate_ = function() {
   if (Math.abs(this.lastVelocity_.x) > 0) {
     this.lastVelocity_.x = this.getPrecisionNumber_(this.lastVelocity_.x * (1 - this.friction_), this.precision_);
     this.position_.x += this.lastVelocity_.x;
+    this.position_.x = parseFloat(this.position_.x.toFixed(this.precision_));
   }
 
   if (Math.abs(this.lastVelocity_.y) > 0) {
     this.lastVelocity_.y = this.getPrecisionNumber_(this.lastVelocity_.y * (1 - this.friction_), this.precision_);
     this.position_.y += this.lastVelocity_.y;
+    this.position_.y = parseFloat(this.position_.y.toFixed(this.precision_));
   }
 
   // Clamp velocity in case it changed during deceleration
@@ -648,6 +650,12 @@ momentum.Handler.prototype.decelerate_ = function() {
 momentum.Handler.prototype.requestAnimationFrame_ = function(callback, ctx) {
   (window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame)(callback.bind(ctx));
 };
+
+/**
+ * @private
+ * @type {string}
+ */
+momentum.utils.cachedVendor_ = '';
 
 /**
  * @param {string=} optProp
@@ -711,11 +719,13 @@ momentum.utils.setTranslation = function(element, x, y) {
  *     width: number,
  *     height: number
  *   }|undefined),
+ *   autoAnchor: (boolean|undefined)
  *   anchorX: (number|undefined),
  *   anchorY: (number|undefined),
  *   threshold: (number|undefined),
  *   restitution: (number|undefined),
- *   maxVelocity: (number|undefined)
+ *   maxVelocity: (number|undefined),
+ *   onMove: (Function|undefined)
  * }=} optConfig
  */
 momentum.Draggable = function(element, optConfig) {
@@ -769,6 +779,50 @@ momentum.Draggable = function(element, optConfig) {
 
 /**
  * @public
+ */
+momentum.Draggable.prototype.updateSettings = function() {
+  if (!isNaN(this.config.restitution)) {
+    this.handler_.setRestitution(this.config.restitution);
+  }
+
+  if (!isNaN(this.config.friction)) {
+    this.handler_.setFriction(this.config.friction);
+  }
+
+  if (!isNaN(this.config.threshold)) {
+    this.handler_.setThreshold(this.config.threshold);
+  }
+
+  if (!isNaN(this.config.maxVelocity)) {
+    this.handler_.setMaxVelocity(this.config.maxVelocity);
+  }
+};
+
+/**
+ * @public
+ * @param {boolean=} optNoCache
+ */
+momentum.Draggable.prototype.updateBounds = function(optNoCache) {
+  if (this.config.bounds) {
+    this.handler_.setBounds(
+      this.config.bounds.x + this.positionOffset_.x,
+      this.config.bounds.x + this.config.bounds.width - (this.elementBounds_.width - this.positionOffset_.x),
+      this.config.bounds.y + this.positionOffset_.y,
+      this.config.bounds.y + this.config.bounds.height - (this.elementBounds_.width - this.positionOffset_.y)
+    )
+  }
+  else if (this.config.containerBounds) {
+    var containerBounds = this.handler_.getTargetBounds(optNoCache);
+
+    this.handler_.setBounds(
+      this.positionOffset_.x, containerBounds.width - (this.elementBounds_.width - this.positionOffset_.x),
+      this.positionOffset_.y, containerBounds.height - (this.elementBounds_.width - this.positionOffset_.y)
+    );
+  }
+};
+
+/**
+ * @public
  * @param {boolean=} optPreventHandler
  */
 momentum.Draggable.prototype.update = function(optPreventHandler) {
@@ -816,38 +870,8 @@ momentum.Draggable.prototype.update = function(optPreventHandler) {
   this.startPosition_.x += containerOffset.x;
   this.startPosition_.y += containerOffset.y;
 
-  if (!isNaN(this.config.restitution)) {
-    this.handler_.setRestitution(this.config.restitution);
-  }
-
-  if (!isNaN(this.config.friction)) {
-    this.handler_.setFriction(this.config.friction);
-  }
-
-  if (!isNaN(this.config.threshold)) {
-    this.handler_.setThreshold(this.config.threshold);
-  }
-
-  if (!isNaN(this.config.maxVelocity)) {
-    this.handler_.setMaxVelocity(this.config.maxVelocity);
-  }
-
-  if (this.config.bounds) {
-    this.handler_.setBounds(
-      this.config.bounds.x + this.positionOffset_.x,
-      this.config.bounds.x + this.config.bounds.width - this.positionOffset_.x,
-      this.config.bounds.y + this.positionOffset_.y,
-      this.config.bounds.y + this.config.bounds.height - this.positionOffset_.y
-    )
-  }
-  else if (this.config.containerBounds) {
-    var containerBounds = this.handler_.getTargetBounds(true);
-
-    this.handler_.setBounds(
-      this.positionOffset_.x, containerBounds.width - this.positionOffset_.x,
-      this.positionOffset_.y, containerBounds.height - this.positionOffset_.y
-    );
-  }
+  // Update bounds with a refresh
+  this.updateBounds(true);
 
   // Update handler
   if ( ! optPreventHandler) {
@@ -863,6 +887,9 @@ momentum.Draggable.prototype.init_ = function() {
   this.handler_ = new momentum.Handler(this.config.container);
   this.handler_.onDown(this.handleDown_, this);
   this.handler_.onMove(this.handleMove_, this);
+
+  // Update settings
+  this.updateSettings();
 
   // Update dragger only to set the initial position first, which
   // will needs some values calculated in the update method.
@@ -905,9 +932,16 @@ momentum.Draggable.prototype.translate_ = function(x, y) {
  */
 momentum.Draggable.prototype.hitTest_ = function(x, y) {
   var elementPosition = this.handler_.getRelativeElementPosition(this.element_);
-
-  return x >= elementPosition.x && x < elementPosition.x + this.elementBounds_.width &&
+  var containsPoints = x >= elementPosition.x && x < elementPosition.x + this.elementBounds_.width &&
          y >= elementPosition.y && y < elementPosition.y + this.elementBounds_.height;
+
+  if (this.config.autoAnchor && containsPoints) {
+    this.positionOffset_.x = x - elementPosition.x;
+    this.positionOffset_.y = y - elementPosition.y;
+    this.updateBounds();
+  }
+
+  return containsPoints;
 };
 
 /**
@@ -922,9 +956,15 @@ momentum.Draggable.prototype.handleDown_ = function(x, y) {
 
 /**
  * @private
- * @param {number} x
- * @param {number} y
+ * @param {number} posX
+ * @param {number} posY
+ * @param {number} velX
+ * @param {number} velY
  */
-momentum.Draggable.prototype.handleMove_ = function(x, y) {
-  this.translate_(x, y);
+momentum.Draggable.prototype.handleMove_ = function(posX, posY, velX, velY) {
+  if (this.config.onMove) {
+    this.config.onMove(posX, posY, velX,  velY);
+  }
+
+  this.translate_(posX, posY);
 };
