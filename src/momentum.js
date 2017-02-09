@@ -348,16 +348,42 @@ momentum.Handler.prototype.setPosition = function(x, y, optReset) {
  */
 momentum.Handler.prototype.init = function() {
   if ('ontouchstart' in window || navigator.msMaxTouchPoints) {
-    this.target_.addEventListener('touchend', this.handleUserUp_.bind(this), false);
-    this.target_.addEventListener('touchcancel', this.handleUserUp_.bind(this), false);
-    this.target_.addEventListener('touchstart', this.handleUserDown_.bind(this), false);
-    this.target_.addEventListener('touchmove', this.handleUserMove_.bind(this), false);
+    this.target_.addEventListener('touchend', this.handleUserUp_.bind(this), {
+      passive: false,
+      useCapture: false
+    });
+    this.target_.addEventListener('touchcancel', this.handleUserUp_.bind(this), {
+      passive: false,
+      useCapture: false
+    });
+    this.target_.addEventListener('touchstart', this.handleUserDown_.bind(this), {
+      passive: false,
+      useCapture: false
+    });
+    this.target_.addEventListener('touchmove', this.handleUserMove_.bind(this), {
+      passive: false,
+      useCapture: false
+    });
   } else {
-    this.target_.addEventListener('mouseup', this.handleUserUp_.bind(this), false);
-    this.target_.addEventListener('mouseleave', this.handleUserUp_.bind(this), false);
-    this.target_.addEventListener('mousedown', this.handleUserDown_.bind(this), false);
-    this.target_.addEventListener('mousemove', this.handleUserMove_.bind(this), false);
+    this.target_.addEventListener('mouseup', this.handleUserUp_.bind(this), {
+      passive: false,
+      useCapture: false
+    });
+    this.target_.addEventListener('mouseleave', this.handleUserUp_.bind(this), {
+      passive: false,
+      useCapture: false
+    });
+    this.target_.addEventListener('mousedown', this.handleUserDown_.bind(this), {
+      passive: false,
+      useCapture: false
+    });
+    this.target_.addEventListener('mousemove', this.handleUserMove_.bind(this), {
+      passive: false,
+      useCapture: false
+    });
   }
+
+  window.addEventListener('scroll', this.update.bind(this), false);
 };
 
 /**
@@ -407,7 +433,7 @@ momentum.Handler.prototype.getRelativeElementPosition = function(element) {
 momentum.Handler.prototype.getEventPosition_ = function(event) {
   var position = new momentum.Coordinate();
 
-  if (event.hasOwnProperty('touches')) {
+  if (event.touches) {
     position.x = event.touches[0].clientX - this.targetBounds_.left;
     position.y = event.touches[0].clientY - this.targetBounds_.top;
   } else {
@@ -658,20 +684,40 @@ momentum.Handler.prototype.requestAnimationFrame_ = function(callback, ctx) {
 momentum.utils.cachedVendor_ = '';
 
 /**
+ * @private
+ * @type {Object}
+ */
+momentum.utils.cachedVendorProps_ = {};
+
+/**
  * @param {string=} optProp
  * @return {string}
  */
 momentum.utils.getVendor = function(optProp) {
   var property = '';
-  var styles = window.getComputedStyle(document.documentElement, '');
-  var prefix = (Array.prototype.slice.call(styles).join('').match(/-(moz|webkit|ms)-/) ||
+  var prefix = '';
+
+  if (optProp && momentum.utils.cachedVendorProps_.hasOwnProperty(optProp)) {
+    return momentum.utils.cachedVendorProps_[optProp];
+  }
+
+  if (momentum.utils.cachedVendor_ != '') {
+    prefix = momentum.utils.cachedVendor_;
+  }
+  else {
+    var styles = window.getComputedStyle(document.documentElement, '');
+    prefix = momentum.utils.cachedVendor_ = (Array.prototype.slice.call(styles).join('').match(/-(moz|webkit|ms)-/) ||
          (styles.OLink === '' && ['', 'o']))[1];
+  }
+
+  var vendorPrefix = prefix[0].toUpperCase() + prefix.substr(1);
 
   if (prefix.length > 0 && optProp) {
     property = optProp[0].toUpperCase() + optProp.substr(1);
+    momentum.utils.cachedVendorProps_[optProp] = vendorPrefix + property;
   }
 
-  return prefix[0].toUpperCase() + prefix.substr(1) + property;
+  return vendorPrefix + property;
 };
 
 /**
@@ -725,6 +771,8 @@ momentum.utils.setTranslation = function(element, x, y) {
  *   threshold: (number|undefined),
  *   restitution: (number|undefined),
  *   maxVelocity: (number|undefined),
+ *   resizeUpdate: (number|undefined) 
+ *   onDown: (Function|undefined)
  *   onMove: (Function|undefined)
  * }=} optConfig
  */
@@ -734,6 +782,12 @@ momentum.Draggable = function(element, optConfig) {
    * @type {Element}
    */
   this.element_ = element;
+
+  /**
+   * @pubic
+   * @type {Object}
+   */
+  this.config = optConfig || {};
 
   /**
    * @private
@@ -758,12 +812,6 @@ momentum.Draggable = function(element, optConfig) {
    * @type {momentum.Coordinate}
    */
   this.startPosition_ = new momentum.Coordinate();
-
-  /**
-   * @pubic
-   * @type {Object}
-   */
-  this.config = optConfig || {};
 
   /**
    * @private
@@ -828,14 +876,16 @@ momentum.Draggable.prototype.updateBounds = function(optNoCache) {
 momentum.Draggable.prototype.update = function(optPreventHandler) {
   optPreventHandler = optPreventHandler && optPreventHandler === true;
 
-  // Update anchor points
-  this.anchorPoint_.x = this.config.anchorX || this.anchorPoint_.x;
-  this.anchorPoint_.y = this.config.anchorY || this.anchorPoint_.y;
-
   // Update element bounds and offsets
   this.elementBounds_ = this.element_.getBoundingClientRect();
-  this.positionOffset_.x = this.elementBounds_.width * this.anchorPoint_.x;
-  this.positionOffset_.y = this.elementBounds_.height * this.anchorPoint_.y;
+
+  // Update anchor points
+  if (!this.config.autoAnchor) {
+    this.anchorPoint_.x = this.config.anchorX || this.anchorPoint_.x;
+    this.anchorPoint_.y = this.config.anchorY || this.anchorPoint_.y;
+    this.positionOffset_.x = this.elementBounds_.width * this.anchorPoint_.x;
+    this.positionOffset_.y = this.elementBounds_.height * this.anchorPoint_.y;
+  }
 
   // Set start position
   this.startPosition_.x = this.element_.offsetLeft;
@@ -904,12 +954,17 @@ momentum.Draggable.prototype.init_ = function() {
     true
   );
 
-  // Update the handler after the startposition was set. This will ensure
+  // Update the handler after the start position was set. This will ensure
   // that all bounds will be set properly.
   this.handler_.update();
 
   // Init handler
   this.handler_.init();
+
+  // Listen for browser events
+  if (this.config.resizeUpdate) {
+    window.addEventListener('resize', this.update.bind(this), false);
+  }
 };
 
 /**
@@ -930,18 +985,8 @@ momentum.Draggable.prototype.translate_ = function(x, y) {
  * @param {number} y
  * @return {boolean}
  */
-momentum.Draggable.prototype.hitTest_ = function(x, y) {
-  var elementPosition = this.handler_.getRelativeElementPosition(this.element_);
-  var containsPoints = x >= elementPosition.x && x < elementPosition.x + this.elementBounds_.width &&
-         y >= elementPosition.y && y < elementPosition.y + this.elementBounds_.height;
-
-  if (this.config.autoAnchor && containsPoints) {
-    this.positionOffset_.x = x - elementPosition.x;
-    this.positionOffset_.y = y - elementPosition.y;
-    this.updateBounds();
-  }
-
-  return containsPoints;
+momentum.Draggable.prototype.hitTest_ = function(x1, y1, x2, y2, width, height) {
+  return x1 >= x2 && x1 < x2 + width && y1 >= y2 && y1 < y2 + height;
 };
 
 /**
@@ -951,7 +996,22 @@ momentum.Draggable.prototype.hitTest_ = function(x, y) {
  * @return {boolean}
  */
 momentum.Draggable.prototype.handleDown_ = function(x, y) {
-  return this.hitTest_(x, y);
+  var elementPosition = this.handler_.getRelativeElementPosition(this.element_);
+  var containsPoint = this.hitTest_(x, y, elementPosition.x, elementPosition.y, 
+    this.elementBounds_.width, this.elementBounds_.height);
+
+  if (this.config.autoAnchor && containsPoint) {
+    this.positionOffset_.x = x - elementPosition.x;
+    this.positionOffset_.y = y - elementPosition.y;
+    this.updateBounds();
+  }
+
+  if (this.config.onDown) {
+    return this.config.onDown(x, y, elementPosition.x, elementPosition.y, 
+      this.elementBounds_.width, this.elementBounds_.height, containsPoint);
+  }
+
+  return containsPoint;
 };
 
 /**
