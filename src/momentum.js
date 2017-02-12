@@ -1,5 +1,7 @@
 momentum = {};
 momentum.utils = {};
+momentum.tween = {};
+momentum.easing = {};
 
 /**
  * @struct
@@ -9,13 +11,13 @@ momentum.utils = {};
  */
 momentum.Coordinate = function(optX, optY) {
   /**
-   * @public
+   * @export
    * @type {number}
    */
   this.x = optX || 0;
 
   /**
-   * @public
+   * @export
    * @type {number}
    */
   this.y = optY || 0;
@@ -119,6 +121,12 @@ momentum.Handler = function(optTarget) {
 
   /**
    * @private
+   * @type {Object}
+   */
+  this.boundOverflow_ = new momentum.Coordinate();
+
+  /**
+   * @private
    * @type {{
    *     minX: number,
    *     maxX: number,
@@ -162,6 +170,12 @@ momentum.Handler = function(optTarget) {
    * @type {boolean}
    */
   this.allowDecelerating_ = false;
+
+  /**
+   * @private
+   * @type {boolean}
+   */
+  this.decelerating_ = false;
 
   /**
    * @private
@@ -263,7 +277,7 @@ momentum.Handler.prototype.setThreshold = function(threshold) {
  * @param {number} restitution
  */
 momentum.Handler.prototype.setRestitution = function(restitution) {
-  this.restitution_ = Math.min(Math.max(restitution, 0), 1);
+  this.restitution_ = Math.min(Math.max(restitution, -1), 1);
 };
 
 /**
@@ -562,7 +576,9 @@ momentum.Handler.prototype.handleUserUp_ = function(event) {
     // Check if the velocity is greater than the threshold to enable
     // the decelerating from the calculated velocity
     if (Math.abs(this.lastVelocity_.x) >= this.threshold_ ||
-      Math.abs(this.lastVelocity_.y) >= this.threshold_) {
+      Math.abs(this.lastVelocity_.y) >= this.threshold_ || 
+      this.boundOverflow_.x != 0 ||
+      this.boundOverflow_.y != 0) {
       this.decelerate_();
     }
   }
@@ -582,25 +598,66 @@ momentum.Handler.prototype.clearStartProperties_ = function() {
  */
 momentum.Handler.prototype.applyBounds_ = function() {
   if (this.hasBounds_) {
-    if (this.hasBoundsX_) {
+    if (this.restitution_ >= 0) {
       this.position_.clampX(this.bounds_.minX, this.bounds_.maxX);
 
       // Handle bounce by inverting the velocity for each axis
-      if (this.position_.x <= this.bounds_.minX ||
-        this.position_.x >= this.bounds_.maxX &&
-        this.restitution_ > 0) {
-        this.lastVelocity_.x = (this.lastVelocity_.x * -1) * this.restitution_;
+      if (this.hasBoundsX_) {
+        if (this.position_.x <= this.bounds_.minX ||
+          this.position_.x >= this.bounds_.maxX &&
+          this.restitution_ > 0) {
+          this.lastVelocity_.x = (this.lastVelocity_.x * -1) * this.restitution_;
+        }
+      }
+    
+      if (this.hasBoundsY_) {
+        this.position_.clampY(this.bounds_.minY, this.bounds_.maxY);
+
+        // Handle bounce by inverting the velocity for each axis
+        if (this.position_.y <= this.bounds_.minY ||
+          this.position_.y >= this.bounds_.maxY &&
+          this.restitution_ > 0) {
+          this.lastVelocity_.y = (this.lastVelocity_.y * -1) * this.restitution_;
+        }
       }
     }
+    else {
+      var boundDiffMinX = this.getPrecisionNumber_(this.bounds_.minX - this.position_.x, this.precision_);
+      var boundDiffMaxX = this.getPrecisionNumber_(this.bounds_.maxX - this.position_.x, this.precision_);
+      var boundDiffMinY = this.getPrecisionNumber_(this.bounds_.minY - this.position_.y, this.precision_);
+      var boundDiffMaxY = this.getPrecisionNumber_(this.bounds_.maxY - this.position_.y, this.precision_);
 
-    if (this.hasBoundsY_) {
-      this.position_.clampY(this.bounds_.minY, this.bounds_.maxY);
+      if (boundDiffMinX > 0) {
+        this.boundOverflow_.x = boundDiffMinX;
+      }
+      else if (this.boundOverflow_.x > 0)  {
+        this.boundOverflow_.x = 0; 
+      }
 
-      // Handle bounce by inverting the velocity for each axis
-      if (this.position_.y <= this.bounds_.minY ||
-        this.position_.y >= this.bounds_.maxY &&
-        this.restitution_ > 0) {
-        this.lastVelocity_.y = (this.lastVelocity_.y * -1) * this.restitution_;
+      if (boundDiffMaxX < 0) {
+        this.boundOverflow_.x = boundDiffMaxX;
+      }
+      else if (this.boundOverflow_.x < 0)  {
+        this.boundOverflow_.x = 0; 
+      }
+
+      if (boundDiffMinY > 0) {
+        this.boundOverflow_.y = boundDiffMinY;
+      }
+      else if (this.boundOverflow_.y > 0)  {
+        this.boundOverflow_.y = 0; 
+      }
+
+      if (boundDiffMaxY < 0) {
+        this.boundOverflow_.y = boundDiffMaxY;
+      }
+      else if (this.boundOverflow_.y < 0)  {
+        this.boundOverflow_.y = 0; 
+      }
+
+      if (this.boundOverflow_.x != 0 ||
+          this.boundOverflow_.y != 0) {
+        this.deflowBounds_();
       }
     }
   }
@@ -640,10 +697,25 @@ momentum.Handler.prototype.getPrecisionNumber_ = function(num, precision) {
 /**
  * @private
  */
+momentum.Handler.prototype.deflowBounds_ = function() {
+  if (this.boundOverflow_.x != 0) {
+    this.position_.x += this.boundOverflow_.x * (1 + this.restitution_);
+  }
+
+  if (this.boundOverflow_.y != 0) {
+    this.position_.y += this.boundOverflow_.y * (1 + this.restitution_); 
+  }
+};
+
+/**
+ * @private
+ */
 momentum.Handler.prototype.decelerate_ = function() {
   if (!this.allowDecelerating_) {
     return;
   }
+
+  this.decelerating_ = true;
 
   if (Math.abs(this.lastVelocity_.x) > 0) {
     this.lastVelocity_.x = this.getPrecisionNumber_(this.lastVelocity_.x * (1 - this.friction_), this.precision_);
@@ -663,7 +735,8 @@ momentum.Handler.prototype.decelerate_ = function() {
   // Notify listeners and apply bounds
   this.positionUpdated_();
 
-  if (Math.abs(this.lastVelocity_.x) > 0 || Math.abs(this.lastVelocity_.y) > 0) {
+  if (Math.abs(this.lastVelocity_.x) > 0 || Math.abs(this.lastVelocity_.y) > 0 || 
+    this.boundOverflow_.x != 0 || this.boundOverflow_.y != 0) {
     this.requestAnimationFrame_(this.decelerate_, this);
   }
 };
@@ -718,6 +791,18 @@ momentum.utils.getVendor = function(optProp) {
   }
 
   return vendorPrefix + property;
+};
+
+/**
+ * @param {Object} object 
+ * @param {string} property
+ * @param {number} from  
+ * @param {number} to    
+ * @param {number} time  
+ * @return {number} 
+ */
+momentum.tween.start = function(object, property, from, to, time) {
+
 };
 
 /**
