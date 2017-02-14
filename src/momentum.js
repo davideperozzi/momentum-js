@@ -35,8 +35,8 @@ momentum.Coordinate.prototype.clone = function() {
  * @public
  */
 momentum.Coordinate.prototype.clamp = function(min, max) {
-  this.x = Math.min(Math.max(this.x, min), max);
-  this.y = Math.min(Math.max(this.y, min), max);
+  this.clampX(min, max);
+  this.clampY(min, max);
 };
 
 /**
@@ -211,13 +211,25 @@ momentum.Handler = function(optTarget) {
    * @private
    * @type {number}
    */
-  this.friction_ = 0.035;
+  this.friction_ = new momentum.Coordinate(0.035, 0.035);
 
   /**
    * @private
    * @type {number}
    */
-  this.restitution_ = 0;
+  this.activeOffsetFriction_ = new momentum.Coordinate(0, 0);
+
+  /**
+   * @private
+   * @type {number}
+   */
+  this.offsetFriction_ = new momentum.Coordinate(0.1, 0.1);
+
+  /**
+   * @private
+   * @type {momentum.Coordinate}
+   */
+  this.restitution_ = new momentum.Coordinate(0, 0);
 
   /**
    * @private
@@ -261,7 +273,17 @@ momentum.Handler.prototype.onDown = function(callback, optCtx) {
  * @param {number} friction
  */
 momentum.Handler.prototype.setFriction = function(friction) {
-  this.friction_ = Math.min(Math.max(friction, 0), 1);
+  this.friction_.x = this.friction_.y = friction;
+  this.friction_.clamp(0, 1);
+};
+
+/**
+ * @public
+ * @param {number} friction
+ */
+momentum.Handler.prototype.setOffsetFriction = function(friction) {
+  this.offsetFriction_.x = this.offsetFriction_.y = friction;
+  this.offsetFriction_.clamp(0, 1);
 };
 
 /**
@@ -277,7 +299,8 @@ momentum.Handler.prototype.setThreshold = function(threshold) {
  * @param {number} restitution
  */
 momentum.Handler.prototype.setRestitution = function(restitution) {
-  this.restitution_ = Math.min(Math.max(restitution, -1), 1);
+  this.restitution_.x = this.restitution_.y = restitution;
+  this.restitution_.clamp(-1, 1);
 };
 
 /**
@@ -598,66 +621,73 @@ momentum.Handler.prototype.clearStartProperties_ = function() {
  */
 momentum.Handler.prototype.applyBounds_ = function() {
   if (this.hasBounds_) {
-    if (this.restitution_ >= 0) {
-      this.position_.clampX(this.bounds_.minX, this.bounds_.maxX);
-
-      // Handle bounce by inverting the velocity for each axis
-      if (this.hasBoundsX_) {
+    if (this.hasBoundsX_) {
+      if (this.restitution_.x >= 0) {
+        this.position_.clampX(this.bounds_.minX, this.bounds_.maxX);
+        
+        // Handle bounce by inverting the velocity for each axis
         if (this.position_.x <= this.bounds_.minX ||
           this.position_.x >= this.bounds_.maxX &&
           this.restitution_ > 0) {
-          this.lastVelocity_.x = (this.lastVelocity_.x * -1) * this.restitution_;
+          this.lastVelocity_.x = (this.lastVelocity_.x * -1) * this.restitution_.x;
         }
       }
-    
-      if (this.hasBoundsY_) {
+      else {
+        if (this.boundOverflow_.x != 0) {
+          this.activeOffsetFriction_.x = this.offsetFriction_.x;
+          this.deflowBoundX_();
+        }
+        else {
+          this.activeOffsetFriction_.x = 0;
+        }
+
+        var boundDiffMinX = 0;
+        var boundDiffMaxX = 0;
+
+        if ((boundDiffMinX = this.bounds_.minX - this.position_.x) > 0) {
+          this.boundOverflow_.x = boundDiffMinX;
+        }
+        else if ((boundDiffMaxX = this.bounds_.maxX - this.position_.x) < 0) {
+          this.boundOverflow_.x = boundDiffMaxX;
+        }
+        else {
+          this.boundOverflow_.x = 0; 
+        }
+      }
+    }
+
+    if (this.hasBoundsY_) {
+      if (this.restitution_.y >= 0) {
         this.position_.clampY(this.bounds_.minY, this.bounds_.maxY);
 
         // Handle bounce by inverting the velocity for each axis
         if (this.position_.y <= this.bounds_.minY ||
           this.position_.y >= this.bounds_.maxY &&
           this.restitution_ > 0) {
-          this.lastVelocity_.y = (this.lastVelocity_.y * -1) * this.restitution_;
+          this.lastVelocity_.y = (this.lastVelocity_.y * -1) * this.restitution_.y;
         }
       }
-    }
-    else {
-      var boundDiffMinX = this.getPrecisionNumber_(this.bounds_.minX - this.position_.x, this.precision_);
-      var boundDiffMaxX = this.getPrecisionNumber_(this.bounds_.maxX - this.position_.x, this.precision_);
-      var boundDiffMinY = this.getPrecisionNumber_(this.bounds_.minY - this.position_.y, this.precision_);
-      var boundDiffMaxY = this.getPrecisionNumber_(this.bounds_.maxY - this.position_.y, this.precision_);
+      else {
+        if (this.boundOverflow_.y != 0) {
+          this.activeOffsetFriction_.y = this.offsetFriction_.y;
+          this.deflowBoundY_();
+        }
+        else {
+          this.activeOffsetFriction_.y = 0;
+        }
 
-      if (boundDiffMinX > 0) {
-        this.boundOverflow_.x = boundDiffMinX;
-      }
-      else if (this.boundOverflow_.x > 0)  {
-        this.boundOverflow_.x = 0; 
-      }
+        var boundDiffMinY = 0;
+        var boundDiffMaxY = 0;
 
-      if (boundDiffMaxX < 0) {
-        this.boundOverflow_.x = boundDiffMaxX;
-      }
-      else if (this.boundOverflow_.x < 0)  {
-        this.boundOverflow_.x = 0; 
-      }
-
-      if (boundDiffMinY > 0) {
-        this.boundOverflow_.y = boundDiffMinY;
-      }
-      else if (this.boundOverflow_.y > 0)  {
-        this.boundOverflow_.y = 0; 
-      }
-
-      if (boundDiffMaxY < 0) {
-        this.boundOverflow_.y = boundDiffMaxY;
-      }
-      else if (this.boundOverflow_.y < 0)  {
-        this.boundOverflow_.y = 0; 
-      }
-
-      if (this.boundOverflow_.x != 0 ||
-          this.boundOverflow_.y != 0) {
-        this.deflowBounds_();
+        if ((boundDiffMinY = this.bounds_.minY - this.position_.y) > 0) {
+          this.boundOverflow_.y = boundDiffMinY;
+        }
+        else if ((boundDiffMaxY = this.bounds_.maxY - this.position_.y) < 0) {
+          this.boundOverflow_.y = boundDiffMaxY;
+        }
+        else {
+          this.boundOverflow_.y = 0; 
+        }
       }
     }
   }
@@ -697,15 +727,32 @@ momentum.Handler.prototype.getPrecisionNumber_ = function(num, precision) {
 /**
  * @private
  */
-momentum.Handler.prototype.deflowBounds_ = function() {
+momentum.Handler.prototype.deflowBoundX_ = function() {
   if (this.boundOverflow_.x != 0) {
-    this.position_.x += this.boundOverflow_.x * (1 + this.restitution_);
-  }
+    var restitution = this.restitution_.x;
 
-  if (this.boundOverflow_.y != 0) {
-    this.position_.y += this.boundOverflow_.y * (1 + this.restitution_); 
+    if (this.dragging_) {
+      restitution /= 2;
+    }
+
+    this.position_.x += this.getPrecisionNumber_(this.boundOverflow_.x * (1 + restitution), this.precision_);
   }
 };
+
+/**
+ * @private
+ */
+momentum.Handler.prototype.deflowBoundY_ = function() {
+  if (this.boundOverflow_.y != 0) {
+    var restitution = this.restitution_.x;
+
+    if (this.dragging_) {
+      restitution /= 2;
+    }
+
+    this.position_.y += this.getPrecisionNumber_(this.boundOverflow_.y * (1 + restitution), this.precision_); 
+  }
+}
 
 /**
  * @private
@@ -718,13 +765,15 @@ momentum.Handler.prototype.decelerate_ = function() {
   this.decelerating_ = true;
 
   if (Math.abs(this.lastVelocity_.x) > 0) {
-    this.lastVelocity_.x = this.getPrecisionNumber_(this.lastVelocity_.x * (1 - this.friction_), this.precision_);
+    var friction = this.activeOffsetFriction_.x > 0 ? this.activeOffsetFriction_.x : this.friction_.x;
+    this.lastVelocity_.x = this.getPrecisionNumber_(this.lastVelocity_.x * (1 - friction), this.precision_);
     this.position_.x += this.lastVelocity_.x;
     this.position_.x = parseFloat(this.position_.x.toFixed(this.precision_));
   }
 
   if (Math.abs(this.lastVelocity_.y) > 0) {
-    this.lastVelocity_.y = this.getPrecisionNumber_(this.lastVelocity_.y * (1 - this.friction_), this.precision_);
+    var friction = this.activeOffsetFriction_.y > 0 ? this.activeOffsetFriction_.y : this.friction_.y;
+    this.lastVelocity_.y = this.getPrecisionNumber_(this.lastVelocity_.y * (1 - friction), this.precision_);
     this.position_.y += this.lastVelocity_.y;
     this.position_.y = parseFloat(this.position_.y.toFixed(this.precision_));
   }
@@ -738,6 +787,9 @@ momentum.Handler.prototype.decelerate_ = function() {
   if (Math.abs(this.lastVelocity_.x) > 0 || Math.abs(this.lastVelocity_.y) > 0 || 
     this.boundOverflow_.x != 0 || this.boundOverflow_.y != 0) {
     this.requestAnimationFrame_(this.decelerate_, this);
+  }
+  else {
+    this.decelerating_ = false;
   }
 };
 
@@ -855,6 +907,8 @@ momentum.utils.setTranslation = function(element, x, y) {
  *   anchorY: (number|undefined),
  *   threshold: (number|undefined),
  *   restitution: (number|undefined),
+ *   friction: (number|undefined),
+ *   offsetFriction: (number|undefined),
  *   maxVelocity: (number|undefined),
  *   resizeUpdate: (number|undefined) 
  *   onDown: (Function|undefined)
@@ -920,6 +974,10 @@ momentum.Draggable.prototype.updateSettings = function() {
 
   if (!isNaN(this.config.friction)) {
     this.handler_.setFriction(this.config.friction);
+  }
+
+  if (!isNaN(this.config.offsetFriction)) {
+    this.handler_.setOffsetFriction(this.config.offsetFriction);
   }
 
   if (!isNaN(this.config.threshold)) {
