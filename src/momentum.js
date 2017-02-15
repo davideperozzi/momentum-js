@@ -624,11 +624,10 @@ momentum.Handler.prototype.applyBounds_ = function() {
     if (this.hasBoundsX_) {
       if (this.restitution_.x >= 0) {
         this.position_.clampX(this.bounds_.minX, this.bounds_.maxX);
-        
+
         // Handle bounce by inverting the velocity for each axis
         if (this.position_.x <= this.bounds_.minX ||
-          this.position_.x >= this.bounds_.maxX &&
-          this.restitution_ > 0) {
+          this.position_.x >= this.bounds_.maxX) {
           this.lastVelocity_.x = (this.lastVelocity_.x * -1) * this.restitution_.x;
         }
       }
@@ -662,8 +661,7 @@ momentum.Handler.prototype.applyBounds_ = function() {
 
         // Handle bounce by inverting the velocity for each axis
         if (this.position_.y <= this.bounds_.minY ||
-          this.position_.y >= this.bounds_.maxY &&
-          this.restitution_ > 0) {
+          this.position_.y >= this.bounds_.maxY) {
           this.lastVelocity_.y = (this.lastVelocity_.y * -1) * this.restitution_.y;
         }
       }
@@ -1000,14 +998,18 @@ momentum.Draggable.prototype.updateBounds = function(optNoCache) {
       this.config.bounds.x + this.config.bounds.width - (this.elementBounds_.width - this.positionOffset_.x),
       this.config.bounds.y + this.positionOffset_.y,
       this.config.bounds.y + this.config.bounds.height - (this.elementBounds_.width - this.positionOffset_.y)
-    )
+    );
   }
   else if (this.config.containerBounds) {
     var containerBounds = this.handler_.getTargetBounds(optNoCache);
+    var overflowX = this.elementBounds_.width > containerBounds.width;
+    var overflowY = this.elementBounds_.height > containerBounds.height;
 
     this.handler_.setBounds(
-      this.positionOffset_.x, containerBounds.width - (this.elementBounds_.width - this.positionOffset_.x),
-      this.positionOffset_.y, containerBounds.height - (this.elementBounds_.width - this.positionOffset_.y)
+      overflowX ? this.positionOffset_.x + containerBounds.width - this.elementBounds_.width : this.positionOffset_.x, 
+      overflowX ? this.positionOffset_.x : containerBounds.width - (this.elementBounds_.width - this.positionOffset_.x),
+      overflowY ? this.positionOffset_.y + containerBounds.height - this.elementBounds_.height : this.positionOffset_.y,
+      overflowY ? this.positionOffset_.y : containerBounds.height - (this.elementBounds_.height - this.positionOffset_.y)
     );
   }
 };
@@ -1106,7 +1108,9 @@ momentum.Draggable.prototype.init_ = function() {
 
   // Listen for browser events
   if (this.config.resizeUpdate) {
-    window.addEventListener('resize', this.update.bind(this), false);
+    window.addEventListener('resize', function(){
+      setTimeout(this.update.bind(this), 0);
+    }.bind(this), false);
   }
 };
 
