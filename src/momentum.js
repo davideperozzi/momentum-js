@@ -377,6 +377,11 @@ momentum.Handler.prototype.setPosition = function(x, y, optReset) {
   if (optReset) {
     this.lastPosition_.x = x;
     this.lastPosition_.y = y;
+
+    if (this.decelerating_) {
+      this.lastVelocity_.x = 0;
+      this.lastVelocity_.y = 0;
+    }
   }
 };
 
@@ -924,7 +929,7 @@ momentum.Draggable = function(element, optConfig) {
    * @pubic
    * @type {Object}
    */
-  this.config = optConfig || {};
+  this.config = optConfig || {};
 
   /**
    * @private
@@ -1043,7 +1048,7 @@ momentum.Draggable.prototype.update = function(optPreventHandler) {
     if (parentElement != this.handler_.getTarget()) {
       var position = momentum.utils.getStyle(parentElement, 'position');
 
-      if (position == 'relative' || position == 'absolute') {
+      if (position == 'relative' || position == 'absolute') {
         var bounds = parentElement.getBoundingClientRect();
 
         if (bounds.left > containerOffset.x) {
@@ -1086,22 +1091,11 @@ momentum.Draggable.prototype.init_ = function() {
   // Update settings
   this.updateSettings();
 
-  // Update dragger only to set the initial position first, which
-  // will needs some values calculated in the update method.
-  this.update(true);
-
   // Set the initial position
-  var initialPosition = this.handler_.getRelativeElementPosition(this.element_);
+  this.setInitialPostiion_();
 
-  this.handler_.setPosition(
-    initialPosition.x + this.positionOffset_.x,
-    initialPosition.y + this.positionOffset_.y,
-    true
-  );
-
-  // Update the handler after the start position was set. This will ensure
-  // that all bounds will be set properly.
-  this.handler_.update();
+  // Initial update
+  this.update();
 
   // Init handler
   this.handler_.init();
@@ -1109,9 +1103,26 @@ momentum.Draggable.prototype.init_ = function() {
   // Listen for browser events
   if (this.config.resizeUpdate) {
     window.addEventListener('resize', function(){
-      setTimeout(this.update.bind(this), 0);
+      setTimeout(function(){  
+        this.setInitialPostiion_();
+        this.update();
+      }.bind(this), 0);
     }.bind(this), false);
   }
+};
+
+/**
+ * @private
+ */
+momentum.Draggable.prototype.setInitialPostiion_ = function()
+{
+  var initialPosition = this.handler_.getRelativeElementPosition(this.element_);
+
+  this.handler_.setPosition(
+    initialPosition.x + this.positionOffset_.x,
+    initialPosition.y + this.positionOffset_.y,
+    true
+  );
 };
 
 /**
