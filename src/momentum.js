@@ -1,7 +1,26 @@
-momentum = {};
-momentum.utils = {};
-momentum.tween = {};
-momentum.easing = {};
+/**
+ * @type {boolean}
+ */
+var WILL_COMPILE = typeof COMPILED != 'undefined';
+
+/**
+ * Define classes for the closure compiler
+ * if compiling definition was activated
+ */
+if (WILL_COMPILE) {
+  goog.provide('momentum');
+  goog.provide('momentum.Draggable');
+  goog.provide('momentum.Handler');
+  goog.provide('momentum.utils');
+  goog.provide('momentum.tween');
+  goog.provide('momentum.easing');
+}
+else {
+  var momentum = {};
+  momentum.utils = {};
+  momentum.tween = {};
+  momentum.easing = {};
+}
 
 /**
  * @struct
@@ -11,13 +30,13 @@ momentum.easing = {};
  */
 momentum.Coordinate = function(optX, optY) {
   /**
-   * @export
+   * @public
    * @type {number}
    */
   this.x = optX || 0;
 
   /**
-   * @export
+   * @public
    * @type {number}
    */
   this.y = optY || 0;
@@ -209,19 +228,19 @@ momentum.Handler = function(optTarget) {
 
   /**
    * @private
-   * @type {number}
+   * @type {momentum.Coordinate}
    */
   this.friction_ = new momentum.Coordinate(0.035, 0.035);
 
   /**
    * @private
-   * @type {number}
+   * @type {momentum.Coordinate}
    */
   this.activeOffsetFriction_ = new momentum.Coordinate(0, 0);
 
   /**
    * @private
-   * @type {number}
+   * @type {momentum.Coordinate}
    */
   this.offsetFriction_ = new momentum.Coordinate(0.1, 0.1);
 
@@ -251,7 +270,7 @@ momentum.Handler = function(optTarget) {
 };
 
 /**
- * @public
+ * @export
  * @param {!Function} callback
  * @param {Object=} optCtx
  */
@@ -260,7 +279,7 @@ momentum.Handler.prototype.onMove = function(callback, optCtx) {
 };
 
 /**
- * @public
+ * @export
  * @param {!Function} callback
  * @param {Object=} optCtx
  */
@@ -269,7 +288,7 @@ momentum.Handler.prototype.onDown = function(callback, optCtx) {
 };
 
 /**
- * @public
+ * @export
  * @param {number} friction
  */
 momentum.Handler.prototype.setFriction = function(friction) {
@@ -278,7 +297,7 @@ momentum.Handler.prototype.setFriction = function(friction) {
 };
 
 /**
- * @public
+ * @export
  * @param {number} friction
  */
 momentum.Handler.prototype.setOffsetFriction = function(friction) {
@@ -287,7 +306,7 @@ momentum.Handler.prototype.setOffsetFriction = function(friction) {
 };
 
 /**
- * @public
+ * @export
  * @param {number} threshold
  */
 momentum.Handler.prototype.setThreshold = function(threshold) {
@@ -295,7 +314,7 @@ momentum.Handler.prototype.setThreshold = function(threshold) {
 };
 
 /**
- * @public
+ * @export
  * @param {number} restitution
  */
 momentum.Handler.prototype.setRestitution = function(restitution) {
@@ -304,7 +323,7 @@ momentum.Handler.prototype.setRestitution = function(restitution) {
 };
 
 /**
- * @public
+ * @export
  * @param {number} maxVelocity
  */
 momentum.Handler.prototype.setMaxVelocity = function(maxVelocity) {
@@ -312,15 +331,15 @@ momentum.Handler.prototype.setMaxVelocity = function(maxVelocity) {
 };
 
 /**
- * @public
- * @return {number}
+ * @export
+ * @return {momentum.Coordinate}
  */
 momentum.Handler.prototype.getFriction = function() {
   return this.friction_;
 };
 
 /**
- * @public
+ * @export
  * @return {number}
  */
 momentum.Handler.prototype.getThreshold = function() {
@@ -328,15 +347,15 @@ momentum.Handler.prototype.getThreshold = function() {
 };
 
 /**
- * @public
- * @return {number}
+ * @export
+ * @return {momentum.Coordinate}
  */
 momentum.Handler.prototype.getRestitution = function() {
   return this.restitution_;
 };
 
 /**
- * @public
+ * @export
  * @return {number}
  */
 momentum.Handler.prototype.getMaxVelocity = function() {
@@ -344,7 +363,7 @@ momentum.Handler.prototype.getMaxVelocity = function() {
 };
 
 /**
- * @public
+ * @export
  * @return {Element}
  */
 momentum.Handler.prototype.getTarget = function() {
@@ -352,7 +371,7 @@ momentum.Handler.prototype.getTarget = function() {
 };
 
 /**
- * @public
+ * @export
  * @param {boolean=} optUpdate
  * @return {ClientRect}
  */
@@ -365,7 +384,7 @@ momentum.Handler.prototype.getTargetBounds = function(optUpdate) {
 };
 
 /**
- * @public
+ * @export
  * @param {number} x
  * @param {number} y
  * @param {boolean=} optReset
@@ -386,7 +405,8 @@ momentum.Handler.prototype.setPosition = function(x, y, optReset) {
 };
 
 /**
- * @public
+ * @export
+ * @suppress {checkTypes}
  */
 momentum.Handler.prototype.init = function() {
   if ('ontouchstart' in window || navigator.msMaxTouchPoints) {
@@ -429,7 +449,7 @@ momentum.Handler.prototype.init = function() {
 };
 
 /**
- * @public
+ * @export
  * @param {number=} optMinX
  * @param {number=} optMaxX
  * @param {number=} optMinY
@@ -447,7 +467,7 @@ momentum.Handler.prototype.setBounds = function(optMinX, optMaxX, optMinY, optMa
 };
 
 /**
- * @public
+ * @export
  */
 momentum.Handler.prototype.update = function() {
   this.targetBounds_ = this.target_.getBoundingClientRect();
@@ -723,7 +743,7 @@ momentum.Handler.prototype.positionUpdated_ = function() {
  * @return {number}
  */
 momentum.Handler.prototype.getPrecisionNumber_ = function(num, precision) {
-  number = num.toString();
+  var number = num.toString();
   return parseFloat(number.substring(0, number.indexOf('.') + (1 + precision))) || 0;
 };
 
@@ -835,7 +855,7 @@ momentum.utils.getVendor = function(optProp) {
   else {
     var styles = window.getComputedStyle(document.documentElement, '');
     prefix = momentum.utils.cachedVendor_ = (Array.prototype.slice.call(styles).join('').match(/-(moz|webkit|ms)-/) ||
-         (styles.OLink === '' && ['', 'o']))[1];
+         (styles.OLink && styles.OLink === '' && ['', 'o']))[1];
   }
 
   var vendorPrefix = prefix[0].toUpperCase() + prefix.substr(1);
@@ -872,8 +892,8 @@ momentum.utils.getStyle = function(element, style, optVendorize) {
 
 /**
  * @param {Element} element
- * @param {string} style
  * @param {string} property
+ * @param {string} value
  * @param {boolean=} optVendorize
  */
 momentum.utils.setStyle = function(element, property, value, optVendorize) {
@@ -894,29 +914,9 @@ momentum.utils.setTranslation = function(element, x, y) {
 };
 
 /**
- * @constructpr
+ * @constructor
  * @param {Element} element
- * @param {{
- *   container: (Element|undefined),
- *   containerBounds: (boolean|undefined),
- *   bounds: ({
- *     x: number,
- *     y: number,
- *     width: number,
- *     height: number
- *   }|undefined),
- *   autoAnchor: (boolean|undefined)
- *   anchorX: (number|undefined),
- *   anchorY: (number|undefined),
- *   threshold: (number|undefined),
- *   restitution: (number|undefined),
- *   friction: (number|undefined),
- *   offsetFriction: (number|undefined),
- *   maxVelocity: (number|undefined),
- *   resizeUpdate: (number|undefined) 
- *   onDown: (Function|undefined)
- *   onMove: (Function|undefined)
- * }=} optConfig
+ * @param {MomentumDraggableConfig} optConfig
  */
 momentum.Draggable = function(element, optConfig) {
   /**
@@ -926,8 +926,8 @@ momentum.Draggable = function(element, optConfig) {
   this.element_ = element;
 
   /**
-   * @pubic
-   * @type {Object}
+   * @public
+   * @type {MomentumDraggableConfig}
    */
   this.config = optConfig || {};
 
@@ -968,32 +968,38 @@ momentum.Draggable = function(element, optConfig) {
 };
 
 /**
- * @public
+ * @export
+ * @type {MomentumDraggableConfig}
+ */
+momentum.Draggable.prototype.config = {};
+
+/**
+ * @export
  */
 momentum.Draggable.prototype.updateSettings = function() {
-  if (!isNaN(this.config.restitution)) {
+  if (this.config.restitution && !isNaN(this.config.restitution)) {
     this.handler_.setRestitution(this.config.restitution);
   }
 
-  if (!isNaN(this.config.friction)) {
+  if (this.config.friction && !isNaN(this.config.friction)) {
     this.handler_.setFriction(this.config.friction);
   }
 
-  if (!isNaN(this.config.offsetFriction)) {
+  if (this.config.offsetFriction && !isNaN(this.config.offsetFriction)) {
     this.handler_.setOffsetFriction(this.config.offsetFriction);
   }
 
-  if (!isNaN(this.config.threshold)) {
+  if (this.config.threshold && !isNaN(this.config.threshold)) {
     this.handler_.setThreshold(this.config.threshold);
   }
 
-  if (!isNaN(this.config.maxVelocity)) {
+  if (this.config.maxVelocity && !isNaN(this.config.maxVelocity)) {
     this.handler_.setMaxVelocity(this.config.maxVelocity);
   }
 };
 
 /**
- * @public
+ * @export
  * @param {boolean=} optNoCache
  */
 momentum.Draggable.prototype.updateBounds = function(optNoCache) {
@@ -1020,7 +1026,7 @@ momentum.Draggable.prototype.updateBounds = function(optNoCache) {
 };
 
 /**
- * @public
+ * @export
  * @param {boolean=} optPreventHandler
  */
 momentum.Draggable.prototype.update = function(optPreventHandler) {
@@ -1135,12 +1141,26 @@ momentum.Draggable.prototype.translate_ = function(x, y) {
   y = y - this.positionOffset_.y - this.startPosition_.y;
 
   momentum.utils.setTranslation(this.element_, x, y);
+  
+  if (this.config.onTranslate) {
+    this.config.onTranslate(
+      x, 
+      y, 
+      this.elementBounds_.width, 
+      this.elementBounds_.height,
+      this.handler_.getTargetBounds()
+    );
+  }
 };
 
 /**
  * @private
- * @param {number} x
- * @param {number} y
+ * @param {number} x1
+ * @param {number} x2
+ * @param {number} y1
+ * @param {number} y2
+ * @param {number} width
+ * @param {number} height
  * @return {boolean}
  */
 momentum.Draggable.prototype.hitTest_ = function(x1, y1, x2, y2, width, height) {
@@ -1186,3 +1206,12 @@ momentum.Draggable.prototype.handleMove_ = function(posX, posY, velX, velY) {
 
   this.translate_(posX, posY);
 };
+
+/**
+ * Export classes after the definitions
+ * for the compiled version
+ */
+if (WILL_COMPILE) {
+  goog.exportSymbol('momentum.Handler', momentum.Handler);
+  goog.exportSymbol('momentum.Draggable', momentum.Draggable);
+}

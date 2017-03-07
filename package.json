@@ -1,0 +1,35 @@
+{
+  "name": "momentum.js",
+  "version": "1.0.0",
+  "description": "Add a momentum effect to elements",
+  "keywords": [
+    "javascript",
+    "momentum",
+    "draggable",
+    "throwable",
+    "throw",
+    "kinetic"
+  ],
+  "homepage": "https://github.com/davideperozzi/momentum-js",
+  "repository": "https://github.com/davideperozzi/momentum-js",
+  "contributors": [
+    {
+      "name": "Davide Perozzi",
+      "email": "info@davide-perozzi.de",
+      "url": "http://davide-perozzi.de/"
+    }
+  ],
+  "license": {
+    "type": "MIT",
+    "url": "http://www.opensource.org/licenses/mit-license.php"
+  },
+  "devDependencies": {
+    "compression": "^1.6.2",
+    "express": "^4.15.2",
+    "google-closure-compiler": "^20170218.0.0",
+    "google-closure-library": "^20170218.0.1",
+    "gulp": "^3.9.1",
+    "gulp-gzip": "^1.4.0",
+    "yargs": "^7.0.1"
+  }
+}
