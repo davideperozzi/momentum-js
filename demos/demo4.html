@@ -3,7 +3,6 @@
 	<head>
 		<title>momentum.js (Demo 4)</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui" />
-		<script src="/momentum"></script>
 		<style>
 			body, html {
 				width: 100%;
@@ -11,13 +10,48 @@
 				margin: 0;
 				padding: 0;
 			}
+
+			.drag-container {
+				position: relative;
+				width: 100vw;
+				height: 100vh;
+				overflow: hidden;
+			}
+
+			.drag-element {
+				position: absolute;
+				left: 50%;
+				top: 50%;
+				width: 180vw;
+				height: 180vh;
+				cursor: move;
+				background: url(https://c1.staticflickr.com/8/7529/15915100635_fdd8bc8554_k.jpg) no-repeat center;
+				background-size: cover;
+				transform: translate(-50%, -50%);
+			}
 		</style>
 	</head>
 	<body>
-		<div class="drag-wrapper"></div>
+		<div class="drag-wrapper">
+			<div class="drag-container">
+				<div class="drag-element"></div>
+			</div>
+		</div>
+		<script src="./node_modules/google-closure-library/closure/goog/base.js"></script>
+		<script src="./etc/momentum.deps.js"></script>
+		<script>goog.require('momentum')</script>
 		<script>
 			var containerElement = document.querySelector('.drag-container');
 			var dragElement = containerElement.querySelector('.drag-element');
+			var dragger = new momentum.Draggable(dragElement, {
+				container: containerElement,
+				containerBounds: true,
+				resizeUpdate: true,
+				autoAnchor: true,
+				threshold: 1,
+				offsetFriction: 0.085,
+				restitution: -0.83,
+			});
 		</script>
 	</body>
 </html>

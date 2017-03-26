@@ -20,7 +20,7 @@
  *   friction: (number|undefined),
  *   offsetFriction: (number|undefined),
  *   maxVelocity: (number|undefined),
- *   resizeUpdate: (number|undefined),
+ *   resizeUpdate: (boolean|undefined),
  *   onDown: (Function|undefined),
  *   onMove: (Function|undefined),
  *   onTranslate: (Function|undefined)

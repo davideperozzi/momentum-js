@@ -3,7 +3,6 @@
 	<head>
 		<title>momentum.js (Demo 1)</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui" />
-		<script src="/momentum"></script>
 		<style>
 			body, html {
 				width: 100%;
@@ -38,7 +37,7 @@
 			.drag-element {
 				position: absolute;
 				left: 50%;
-				top: 50%;	
+				top: 50%;
 				cursor: move;
 				transform-origin: 50% 50%;
 				z-index: 2;
@@ -47,7 +46,7 @@
 				transform: translate(-50%, -50%);
 			}
 
-			.drag-element img { 
+			.drag-element img {
 				border-radius: 160px;
 			}
 
@@ -74,6 +73,9 @@
 				</div>
 			</div>
 		</div>
+		<script src="./node_modules/google-closure-library/closure/goog/base.js"></script>
+		<script src="./etc/momentum.deps.js"></script>
+		<script>goog.require('momentum')</script>
 		<script>
 			var containerElement = document.querySelector('.drag-container');
 			var dragWrapper = document.querySelector('.drag-wrapper');

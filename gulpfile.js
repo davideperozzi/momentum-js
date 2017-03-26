@@ -2,14 +2,25 @@ const gulp = require('gulp');
 const path = require("path");
 const gzip = require('gulp-gzip');
 const argv = require('yargs').alias('d', 'dist').argv;
-const express = require('express');
+const connect = require('gulp-connect');
+const closureDeps = require('gulp-closure-deps');
 const compression = require("compression")
 const closureCompiler = require('google-closure-compiler').gulp();
+
+gulp.task('deps-js', () => {
+	return gulp.src('./src/**/*.js')
+		.pipe(closureDeps({
+			fileName: 'momentum.deps.js',
+			prefix: '../../../../'
+		}))
+		.pipe(gulp.dest('./etc'))
+});
 
 gulp.task('build-js', () => {
 	return closureCompiler({
 		js: [
 			'./node_modules/google-closure-library/closure/goog/base.js',
+			'./src/momentum/*.js',
 			'./src/momentum.js'
 		],
 		define: 'COMPILED=true',
@@ -37,29 +48,11 @@ gulp.task('build', ['build-js'], () => {
 });
 
 gulp.task('start', () => {
-	var app = express();
-
-	app.use(compression());
-	app.get('/', (req, res) => {
-		res.sendFile(path.join(__dirname + '/demos/index.html')); 
+	return connect.server({
+		root: ['./demos', './'],
+		livereload: true,
+		port: 8000
 	});
-
-	app.get('/momentum', (req, res) => {
-		if (argv.dist) {
-	    	res.sendFile(path.join(__dirname + '/dist/momentum.min.js')); 
-		}
-		else {
-	    	res.sendFile(path.join(__dirname + '/src/momentum.js')); 
-		}
-	});
-
-	for (var i = 1, len = 4; i <= len; i++) {
-		app.get('/demo/' + i, function(num, req, res){
-		    res.sendFile(path.join(__dirname + '/demos/demo' + num + '.html'));
-		}.bind(this, i));
-	}
-
-	app.listen(3000);
 });
 
 gulp.task('default', ['build']);
