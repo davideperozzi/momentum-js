@@ -1,6 +1,6 @@
 ## About momentum.js
 
-momenutm.js is a small (plain written) JavaScript plugin, which gives you the ability to add a "throw momentum effect" to anything displayed on your webpage. It can be a handy alternative to the Draggable extension of the greensock animation framework. Besides desktop devices it also works for mobile and touch devices.
+momenutm.js is a small (plainly written) JavaScript plugin, giving you the ability to add a "throw momentum effect" to anything displayed on your webpage. It can be a handy alternative to the Draggable extension of the greensock animation framework. Besides desktop devices it also works for mobile and touch devices.
 
 ## Installation
 
@@ -12,13 +12,13 @@ npm install momentum.js
 
 ## How to use the Draggable
 
-The Draggable component will allow your elements to be dragged around.
+The Draggable component allows your elements to be dragged around.
 
 ```javascript
 new momentum.Draggable(element, config);
 ```
 
-To create a basic draggable element, you can look at this example:
+This example shows how to create a basic draggable element:
 
 ```javascript
 new momentum.Draggable(dragElement, {
@@ -46,10 +46,10 @@ http://davide-perozzi.de/momentum-js/
 | restitution | number | 0 | The bounciness of the element if it hits the bounds. This will be multiplicated with the velocity. You can use negative values to let the element bounce out of the bounds. Numbers **from -1 to 1** are **valid**.
 | friction | number | 0.035 | The friction of the element. Lower values make the elements decelerating longer. Numbers **from 0 to 1** are **valid** |
 | offsetFriction | number | 0.1 | The friction used out of bounds. This will be take part in the calculations if you used a negative restitution. Numbers **from 0 to 1** are **valid** |
-| maxVelocity | number | 70 | The maximal velocity the element can reach. Numbers **greater than 0** are **valid**. |
-| resizeUpdate | boolean | false | Determines if the draggable should be updated automatically if the browser was resized. |
-| onDown | Function | null | Callback which will be called if the user hit the element before the drag. Wether you return true or false the drag will be accepted. If you want to **preserve the default behaviour** you should **return the "isHit" parameter**. Parameter list: cursorX, cursorY, elementX, elementY, elementWidth, elementHeight, isHit |
-| onMove | Function | null | This will be triggered before the element is going to be moved. At this point the element did **not** has the latest translation. Parameter list: posX, posY, velX, velY. |
+| maxVelocity | number | 70 | The maximum velocity the element can reach. Numbers **greater than 0** are **valid**. |
+| resizeUpdate | boolean | false | Determines whether the draggable should be updated automatically after the browser is resized. |
+| onDown | Function | null | Callback which will be called if the user hits the element before the drag. Wether you return true or false the drag will be accepted. If you want to **preserve the default behaviour** you should **return the "isHit" parameter**. Parameter list: cursorX, cursorY, elementX, elementY, elementWidth, elementHeight, isHit |
+| onMove | Function | null | This will be triggered before the element is going to be moved. At this point the element did **not** have the latest translation. Parameter list: posX, posY, velX, velY. |
 | onTranslate | Function | null | This will be called if the translation settled. Parameter list:  elementX, elementY, elementWidth, elementHeight, elementBounds |
 
 ## License
