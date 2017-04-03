@@ -48,7 +48,7 @@ http://davide-perozzi.de/momentum-js/
 | offsetFriction | number | 0.1 | The friction used out of bounds. This will be included in the calculations if you used a negative restitution. Numbers **from 0 to 1** are **valid** |
 | maxVelocity | number | 70 | The maximum velocity the element can reach. Numbers **greater than 0** are **valid**. |
 | resizeUpdate | boolean | false | Determines whether the draggable should be updated automatically after the browser is resized. |
-| onDown | Function | null | Callback which will be called if the user hits the element before the drag.Wether you return true or false determimes if the drag will be accepted. If you want to **preserve the default behaviour** you should **return the "isHit" parameter**. Parameter list: cursorX, cursorY, elementX, elementY, elementWidth, elementHeight, isHit |
+| onDown | Function | null | Callback which will be called if the user hits the element before the drag. Whether you return true or false determimes if the drag will be accepted. If you want to **preserve the default behaviour** you should **return the "isHit" parameter**. Parameter list: cursorX, cursorY, elementX, elementY, elementWidth, elementHeight, isHit |
 | onMove | Function | null | This will be triggered before the element is going to be moved. At this point the element does **not** have the latest translation. Parameter list: posX, posY, velX, velY. |
 | onTranslate | Function | null | This will be called if the translation settled. Parameter list:  elementX, elementY, elementWidth, elementHeight, elementBounds |
 
