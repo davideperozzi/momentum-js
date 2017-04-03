@@ -44,12 +44,12 @@ http://davide-perozzi.de/momentum-js/
 | anchorY | number | 0.5 | The anchor point on the vertical axis. |
 | threshold | number| 5 | The minimum velocity the element needs to reach to trigger the throw animation |
 | restitution | number | 0 | The bounciness of the element if it hits the bounds. This will be multiplicated with the velocity. You can use negative values to let the element bounce out of the bounds. Numbers **from -1 to 1** are **valid**.
-| friction | number | 0.035 | The friction of the element. Lower values make the elements decelerating longer. Numbers **from 0 to 1** are **valid** |
-| offsetFriction | number | 0.1 | The friction used out of bounds. This will be take part in the calculations if you used a negative restitution. Numbers **from 0 to 1** are **valid** |
+| friction | number | 0.035 | The friction of the element. Lower values make the elements decelerate longer. Numbers **from 0 to 1** are **valid** |
+| offsetFriction | number | 0.1 | The friction used out of bounds. This will be included in the calculations if you used a negative restitution. Numbers **from 0 to 1** are **valid** |
 | maxVelocity | number | 70 | The maximum velocity the element can reach. Numbers **greater than 0** are **valid**. |
 | resizeUpdate | boolean | false | Determines whether the draggable should be updated automatically after the browser is resized. |
-| onDown | Function | null | Callback which will be called if the user hits the element before the drag. Wether you return true or false the drag will be accepted. If you want to **preserve the default behaviour** you should **return the "isHit" parameter**. Parameter list: cursorX, cursorY, elementX, elementY, elementWidth, elementHeight, isHit |
-| onMove | Function | null | This will be triggered before the element is going to be moved. At this point the element did **not** have the latest translation. Parameter list: posX, posY, velX, velY. |
+| onDown | Function | null | Callback which will be called if the user hits the element before the drag.Wether you return true or false determimes if the drag will be accepted. If you want to **preserve the default behaviour** you should **return the "isHit" parameter**. Parameter list: cursorX, cursorY, elementX, elementY, elementWidth, elementHeight, isHit |
+| onMove | Function | null | This will be triggered before the element is going to be moved. At this point the element does **not** have the latest translation. Parameter list: posX, posY, velX, velY. |
 | onTranslate | Function | null | This will be called if the translation settled. Parameter list:  elementX, elementY, elementWidth, elementHeight, elementBounds |
 
 ## License
