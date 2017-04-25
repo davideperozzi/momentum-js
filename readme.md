@@ -1,5 +1,5 @@
 <p align="center"><img src="http://i68.tinypic.com/rtg4qv.png"></p>
-<p align="center"><img src="https://badge.fury.io/js/momentum.js.svg"></p>
+<p align="center"><a href="https://www.npmjs.com/package/momentum.js"><img src="https://badge.fury.io/js/momentum.js.svg"></a></p>
 
 ## About momentum.js
 
