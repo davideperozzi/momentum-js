@@ -15,10 +15,10 @@ momentum.Rotatable = function(element) {
 	this.element_ = element;
 
 	/**
-   * @private
-   * @type {ClientRect}
-   */
-  this.elementBounds_ = this.element_.getBoundingClientRect();
+	* @private
+	* @type {ClientRect}
+	*/
+	this.elementBounds_ = this.element_.getBoundingClientRect();
 
 	/**
 	 * @private
