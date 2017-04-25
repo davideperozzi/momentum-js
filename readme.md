@@ -1,5 +1,8 @@
 <p align="center"><img src="http://i68.tinypic.com/rtg4qv.png"></p>
-<p align="center"><a href="https://www.npmjs.com/package/momentum.js"><img src="https://badge.fury.io/js/momentum.js.svg"></a></p>
+<p align="center">
+  <a href="https://www.npmjs.com/package/momentum.js" target="_blank"><img src="https://badge.fury.io/js/momentum.js.svg"></a>
+  <a href="https://opensource.org/licenses/MIT" target="_blank"><img src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
+</p>
 
 ## About momentum.js
 
