@@ -12,13 +12,24 @@
 			}
 
 			.drag-container {
-				position: relative;
 				width: 100vw;
 				height: 100vh;
 				overflow: hidden;
 			}
 
-			.drag-element {
+			.knob-container {
+				position: absolute;
+				left: 50%;
+				top: 50%;
+				width: 600px;
+				height: 600px;
+				margin-left: -300px;
+				margin-top: -300px;
+				background: url(./assets/knob-bg.png);
+				background-size: contain;
+			}
+
+			.drag-element-wrapper {
 				position: absolute;
 				left: 50%;
 				top: 50%;
@@ -26,33 +37,33 @@
 				height: 300px;
 				margin-left: -150px;
 				margin-top: -150px;
-				border-radius: 50%;
-				background-color: #2e2e2e;
 			}
 
-			.drag-element:after {
-				content: "";
-				position: absolute;
-				height: 50%;
-				top: 0;
-				left: 50%;
-				width: 5px;
-				background-color: white;
-				transform: translate(-50%, 0);
+			.drag-element {
+				width: 100%;
+				height: 100%;
+				border-radius: 50%;
+				box-shadow: 0px 0px 5px rgba(0,0,0,0.5);
+				background: url(./assets/knob.png);
+				background-size: contain;
 			}
 		</style>
 	</head>
 	<body>
 		<div class="drag-wrapper">
 			<div class="drag-container">
-				<div class="drag-element"></div>
+				<div class="knob-container">
+					<div class="drag-element-wrapper">
+						<div class="drag-element"></div>
+					</div>
+				</div>
 			</div>
 		</div>
 		<script src="./node_modules/google-closure-library/closure/goog/base.js"></script>
 		<script src="./etc/momentum.deps.js"></script>
 		<script>goog.require('momentum.Rotatable')</script>
 		<script>
-			var containerElement = document.querySelector('.drag-container');
+			var containerElement = document.querySelector('.drag-element-wrapper');
 			var dragElement = containerElement.querySelector('.drag-element');
 			var dragger = new momentum.Rotatable(dragElement);
 		</script>

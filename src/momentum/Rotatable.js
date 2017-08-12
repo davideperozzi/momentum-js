@@ -2,6 +2,7 @@ goog.provide('momentum.Rotatable');
 
 // momentum
 goog.require('momentum.Handler');
+goog.require('momentum.utils')
 
 /**
  * @constructor
@@ -15,10 +16,10 @@ momentum.Rotatable = function(element) {
 	this.element_ = element;
 
 	/**
-	* @private
-	* @type {ClientRect}
-	*/
-	this.elementBounds_ = this.element_.getBoundingClientRect();
+   * @private
+   * @type {ClientRect}
+   */
+  this.elementBounds_ = this.element_.getBoundingClientRect();
 
 	/**
 	 * @private
@@ -51,9 +52,18 @@ momentum.Rotatable.prototype.init_ = function() {
 	this.handler_ = new momentum.Handler(this.element_.parentElement);
 	this.handler_.onDown(this.handleDown_, this);
 	this.handler_.onMove(this.handleMove_, this);
-	this.handler_.setFriction(0.015);
-	this.handler_.setMaxVelocity(500);
 	this.handler_.init();
+};
+
+/**
+ * @private
+ * @param {number} x
+ * @param {number} y
+ * @param {number} r
+ * @return {number}
+ */
+momentum.Rotatable.prototype.getRotationDegree_ = function(x, y, r) {
+  return 180 - Math.atan2(x - r, y - r) * (180 / Math.PI);
 };
 
 /**
@@ -63,26 +73,23 @@ momentum.Rotatable.prototype.init_ = function() {
  * @return {boolean}
  */
 momentum.Rotatable.prototype.handleDown_ = function(x, y) {
-	rotPosX = x - this.elementBounds_.left - this.elementBounds_.width / 2;
-	rotPosY = y - this.elementBounds_.top - this.elementBounds_.width / 2;
+  var rotation = this.getRotationDegree_(x, y, this.elementBounds_.width / 2);
 
-	this.startRotation_ = 180 - this.lastRotation_ - Math.atan2(rotPosX, rotPosY) * (180 / Math.PI);
+	this.startRotation_ = rotation - this.lastRotation_;
 
 	return true;
 };	
 
 /**
  * @private
- * @param {number} posX
- * @param {number} posY
- * @param {number} velX
- * @param {number} velY
+ * @param {number} x
+ * @param {number} y
  */
-momentum.Rotatable.prototype.handleMove_ = function(posX, posY, velX, velY) {
-	rotPosX = posX - this.elementBounds_.left - this.elementBounds_.width / 2;
-	rotPosY = posY - this.elementBounds_.top - this.elementBounds_.width / 2;
+momentum.Rotatable.prototype.handleMove_ = function(x, y) {
+  var rotation = this.getRotationDegree_(x, y, this.elementBounds_.width / 2);
 
-	this.lastRotation_ = 180 - this.startRotation_ - Math.atan2(rotPosX, rotPosY) * (180 / Math.PI);
+  this.lastRotation_ = rotation - this.startRotation_;
+  this.lastRotation_ %= 360;
 
-	this.element_.style.transform = "rotate(" + this.lastRotation_ + "deg)";
+  momentum.utils.setStyle(this.element_, 'transform', 'rotate(' + this.lastRotation_ + 'deg)');
 };
