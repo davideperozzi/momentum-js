@@ -17,23 +17,19 @@ gulp.task('deps-js', () => {
 });
 
 gulp.task('build-js', () => {
-	return closureCompiler({
-		js: [
-			'./node_modules/google-closure-library/closure/goog/base.js',
-			'./src/momentum/*.js',
-			'./src/momentum.js'
-		],
-		define: 'COMPILED=true',
-		generate_exports: '1',
-		compilation_level: 'ADVANCED',
-		warning_level: 'VERBOSE',
-		language_in: 'ECMASCRIPT5_STRICT',
-		language_out: 'ECMASCRIPT5_STRICT',
-		js_output_file: 'momentum.min.js',
-		closure_entry_point: 'momentum',
-		externs: ['./etc/momentum.externs.js']
-	})
-	.src()
+	return gulp.src([
+      './node_modules/google-closure-library/closure/goog/base.js',
+      './src/**/*.js'
+    ]).pipe(closureCompiler({
+  		generate_exports: '1',
+  		compilation_level: 'ADVANCED',
+  		warning_level: 'VERBOSE',
+  		language_in: 'ECMASCRIPT5_STRICT',
+  		language_out: 'ECMASCRIPT5_STRICT',
+  		js_output_file: 'momentum.min.js',
+  		closure_entry_point: 'momentum',
+  		externs: ['./etc/momentum.externs.js']
+	}))
 	.pipe(gulp.dest('./dist/'));
 });
 
