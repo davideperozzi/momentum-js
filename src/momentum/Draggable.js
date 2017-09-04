@@ -54,6 +54,12 @@ momentum.Draggable = function(element, optConfig) {
   this.handler_ = null;
 
   /**
+   * @private
+   * @type {boolean}
+   */
+  this.destroyed_ = false;
+
+  /**
    * Initialize self
    */
   this.init_();
@@ -178,11 +184,45 @@ momentum.Draggable.prototype.update = function(optPreventHandler) {
 };
 
 /**
+ * @public
+ * @export
+ */
+momentum.Draggable.prototype.reset = function() {
+  this.destroy();
+  this.restore();
+};
+
+/**
+ * @public
+ * @export
+ */
+momentum.Draggable.prototype.destroy = function() {
+  this.destroyed_ = true;
+
+  this.handler_.destroy();
+  delete this.handler_;
+  this.handler_ = null;
+
+  momentum.utils.removeStyle(this.element_, 'transform', true);
+};
+
+/**
+ * @public
+ * @export
+ */
+momentum.Draggable.prototype.restore = function() {
+  this.destroyed_ = false;
+
+  this.init_();
+};
+
+/**
  * @private
  */
 momentum.Draggable.prototype.init_ = function() {
   // Setup handler
   this.handler_ = new momentum.Handler(this.config.container);
+  this.handler_.onUp(this.handleUp_, this);
   this.handler_.onDown(this.handleDown_, this);
   this.handler_.onMove(this.handleMove_, this);
 
@@ -229,8 +269,24 @@ momentum.Draggable.prototype.setInitialPostiion_ = function()
  * @param {number} y
  */
 momentum.Draggable.prototype.translate_ = function(x, y) {
+  if (this.destroyed_) {
+    return;
+  }
+
   x = x - this.positionOffset_.x - this.startPosition_.x;
   y = y - this.positionOffset_.y - this.startPosition_.y;
+
+  if (this.config.lockAxis) {
+    if (goog.isObject(this.config.lockAxis)) {
+      if (true == this.config.lockAxis.y) {
+        y = 0;
+      }
+
+      if (true == this.config.lockAxis.x) {
+        x = 0;
+      }
+    }
+  }
 
   momentum.utils.setTranslation(this.element_, x, y);
 
@@ -266,6 +322,10 @@ momentum.Draggable.prototype.hitTest_ = function(x1, y1, x2, y2, width, height) 
  * @return {boolean}
  */
 momentum.Draggable.prototype.handleDown_ = function(x, y) {
+  if (this.destroyed_) {
+    return false;
+  }
+
   var elementPosition = this.handler_.getRelativeElementPosition(this.element_);
   var containsPoint = this.hitTest_(x, y, elementPosition.x, elementPosition.y,
     this.elementBounds_.width, this.elementBounds_.height);
@@ -277,11 +337,29 @@ momentum.Draggable.prototype.handleDown_ = function(x, y) {
   }
 
   if (this.config.onDown) {
-    return this.config.onDown(x, y, elementPosition.x, elementPosition.y,
-      this.elementBounds_.width, this.elementBounds_.height, containsPoint);
+    var customHit = this.config.onDown(containsPoint, x, y, elementPosition.x, elementPosition.y,
+      this.elementBounds_.width, this.elementBounds_.height);
+
+    if (goog.isBoolean(customHit)) {
+      return customHit;
+    }
   }
 
   return containsPoint;
+};
+
+/**
+ * @private
+ */
+momentum.Draggable.prototype.handleUp_ = function()
+{
+  if (this.destroyed_) {
+    return;
+  }
+
+  if (this.config.onUp) {
+    this.config.onUp();
+  }
 };
 
 /**
@@ -292,8 +370,22 @@ momentum.Draggable.prototype.handleDown_ = function(x, y) {
  * @param {number} velY
  */
 momentum.Draggable.prototype.handleMove_ = function(posX, posY, velX, velY) {
+  if (this.destroyed_) {
+    return;
+  }
+
   if (this.config.onMove) {
-    this.config.onMove(posX, posY, velX,  velY);
+    var newPosition = this.config.onMove(posX, posY, velX,  velY);
+
+    if (goog.isObject(newPosition)) {
+      if (newPosition.hasOwnProperty('x')) {
+        posX = parseFloat(newPosition['x']);
+      }
+
+      if (newPosition.hasOwnProperty('y')) {
+        posY = parseFloat(newPosition['y']);
+      }
+    }
   }
 
   this.translate_(posX, posY);

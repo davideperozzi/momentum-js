@@ -78,6 +78,12 @@ momentum.Handler = function(optTarget) {
    * @private
    * @type {boolean}
    */
+  this.animationsStopped_ = false;
+
+  /**
+   * @private
+   * @type {boolean}
+   */
   this.hasBounds_ = false;
 
   /**
@@ -127,6 +133,12 @@ momentum.Handler = function(optTarget) {
    * @type {Array<!Function>}
    */
   this.moveCallbacks_ = [];
+
+  /**
+   * @private
+   * @type {Array<Function>}
+   */
+  this.upCallbacks_ = [];
 
   /**
    * @private
@@ -181,6 +193,21 @@ momentum.Handler = function(optTarget) {
    * @type {number}
    */
   this.maxVelocity_ = 70;
+
+  /**
+   * @private
+   * @type {Object}
+   */
+  this.currentListenerMap_ = {};
+
+  /**
+   * @private
+   * @type {Object}
+   */
+  this.listenerOptions_ = {
+    'passive': false,
+    'useCapture': false
+  };
 };
 
 /**
@@ -199,6 +226,16 @@ momentum.Handler.prototype.onMove = function(callback, optCtx) {
  */
 momentum.Handler.prototype.onDown = function(callback, optCtx) {
   this.downCallback_ = callback.bind(optCtx || this);
+};
+
+
+/**
+ * @export
+ * @param {!Function} callback
+ * @param {Object=} optCtx
+ */
+momentum.Handler.prototype.onUp = function(callback, optCtx) {
+  this.upCallbacks_.push(callback.bind(optCtx || this));
 };
 
 /**
@@ -324,42 +361,81 @@ momentum.Handler.prototype.setPosition = function(x, y, optReset) {
  */
 momentum.Handler.prototype.init = function() {
   if ('ontouchstart' in window || navigator.msMaxTouchPoints) {
-    this.target_.addEventListener('touchend', this.handleUserUp_.bind(this), {
-      passive: false,
-      useCapture: false
-    });
-    this.target_.addEventListener('touchcancel', this.handleUserUp_.bind(this), {
-      passive: false,
-      useCapture: false
-    });
-    this.target_.addEventListener('touchstart', this.handleUserDown_.bind(this), {
-      passive: false,
-      useCapture: false
-    });
-    this.target_.addEventListener('touchmove', this.handleUserMove_.bind(this), {
-      passive: false,
-      useCapture: false
-    });
+    this.currentListenerMap_ = {
+      'touchend': {
+        'target': this.target_,
+        'listener': this.handleUserUp_.bind(this)
+      },
+      'touchcancel': {
+        'target': this.target_,
+        'listener': this.handleUserUp_.bind(this)
+      },
+      'touchstart': {
+        'target': this.target_,
+        'listener': this.handleUserDown_.bind(this)
+      },
+      'touchmove': {
+        'target': this.target_,
+        'listener': this.handleUserMove_.bind(this)
+      }
+    };
   } else {
-    this.target_.addEventListener('mouseup', this.handleUserUp_.bind(this), {
-      passive: false,
-      useCapture: false
-    });
-    this.target_.addEventListener('mouseleave', this.handleUserUp_.bind(this), {
-      passive: false,
-      useCapture: false
-    });
-    this.target_.addEventListener('mousedown', this.handleUserDown_.bind(this), {
-      passive: false,
-      useCapture: false
-    });
-    this.target_.addEventListener('mousemove', this.handleUserMove_.bind(this), {
-      passive: false,
-      useCapture: false
-    });
+    this.currentListenerMap_ = {
+      'mouseup': {
+        'target': this.target_,
+        'listener': this.handleUserUp_.bind(this)
+      },
+      'mouseleave': {
+        'target': this.target_,
+        'listener': this.handleUserUp_.bind(this)
+      },
+      'mousedown': {
+        'target': this.target_,
+        'listener': this.handleUserDown_.bind(this)
+      },
+      'mousemove': {
+        'target': this.target_,
+        'listener': this.handleUserMove_.bind(this)
+      }
+    };
   }
 
-  window.addEventListener('scroll', this.update.bind(this), false);
+  this.currentListenerMap_['scroll'] = {
+    'target': window,
+    'listener': this.update.bind(this)
+  };
+
+  this.applyListenerMap_();
+};
+
+/**
+ * @public
+ * @export
+ */
+momentum.Handler.prototype.destroy = function()
+{
+  this.removeListenerMap_();
+  this.stop();
+};
+
+/**
+ * @public
+ * @export
+ */
+momentum.Handler.prototype.stop = function()
+{
+  this.animationsStopped_ = true;
+  this.allowDecelerating_ = false;
+};
+
+/**
+ * @public
+ * @export
+ */
+momentum.Handler.prototype.start = function()
+{
+  this.animationsStopped_ = false;
+  this.allowDecelerating_ = true;
 };
 
 /**
@@ -400,6 +476,40 @@ momentum.Handler.prototype.getRelativeElementPosition = function(element) {
     bounds.left - this.targetBounds_.left,
     bounds.top - this.targetBounds_.top
   );
+};
+
+/**
+ * @private
+ */
+momentum.Handler.prototype.applyListenerMap_ = function()
+{
+  for (var type in this.currentListenerMap_) {
+    var target = this.currentListenerMap_[type]['target'];
+
+    target.addEventListener(
+      type,
+      this.currentListenerMap_[type]['listener'],
+      this.listenerOptions_
+    );
+  }
+};
+
+/**
+ * @private
+ */
+momentum.Handler.prototype.removeListenerMap_ = function()
+{
+  for (var type in this.currentListenerMap_) {
+    var target = this.currentListenerMap_[type]['target'];
+
+    target.removeEventListener(
+      type,
+      this.currentListenerMap_[type]['listener'],
+      this.listenerOptions_
+    );
+  }
+
+  this.currentListenerMap_ = {};
 };
 
 /**
@@ -447,6 +557,9 @@ momentum.Handler.prototype.handleUserDown_ = function(event) {
   this.collectTrackingPoints_();
 };
 
+/**
+ * @private
+ */
 momentum.Handler.prototype.collectTrackingPoints_ = function() {
   this.addTrackingPoint_();
   this.updateTrackingPoints_();
@@ -542,6 +655,11 @@ momentum.Handler.prototype.handleUserUp_ = function(event) {
       this.boundOverflow_.x != 0 ||
       this.boundOverflow_.y != 0) {
       this.decelerate_();
+    }
+
+    // Call up callbacks
+    for (var i = 0, len = this.upCallbacks_.length; i < len; i++) {
+      this.upCallbacks_[i]();
     }
   }
 };
@@ -736,5 +854,7 @@ momentum.Handler.prototype.decelerate_ = function() {
  * @private
  */
 momentum.Handler.prototype.requestAnimationFrame_ = function(callback, ctx) {
-  (window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame)(callback.bind(ctx));
+  if ( ! this.animationsStopped_) {
+    (window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame)(callback.bind(ctx));
+  }
 };
