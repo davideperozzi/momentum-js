@@ -184,7 +184,6 @@ momentum.Draggable.prototype.update = function(optPreventHandler) {
 };
 
 /**
- * @public
  * @export
  */
 momentum.Draggable.prototype.reset = function() {
@@ -193,7 +192,6 @@ momentum.Draggable.prototype.reset = function() {
 };
 
 /**
- * @public
  * @export
  */
 momentum.Draggable.prototype.destroy = function() {
@@ -207,7 +205,6 @@ momentum.Draggable.prototype.destroy = function() {
 };
 
 /**
- * @public
  * @export
  */
 momentum.Draggable.prototype.restore = function() {

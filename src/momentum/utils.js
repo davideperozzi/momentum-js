@@ -75,7 +75,7 @@ momentum.utils.setStyle = function(element, property, value, optVendorize) {
  */
 momentum.utils.removeStyle = function(element, property, optVendorize)
 {
-  element.style[property]
+  element.style[property] = '';
 
   if (optVendorize) {
     element.style[momentum.utils.getVendor(property)] = '';

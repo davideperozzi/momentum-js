@@ -409,7 +409,6 @@ momentum.Handler.prototype.init = function() {
 };
 
 /**
- * @public
  * @export
  */
 momentum.Handler.prototype.destroy = function()
@@ -419,7 +418,6 @@ momentum.Handler.prototype.destroy = function()
 };
 
 /**
- * @public
  * @export
  */
 momentum.Handler.prototype.stop = function()
@@ -429,7 +427,6 @@ momentum.Handler.prototype.stop = function()
 };
 
 /**
- * @public
  * @export
  */
 momentum.Handler.prototype.start = function()
