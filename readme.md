@@ -54,8 +54,10 @@ http://davide-perozzi.de/momentum-js/
 | offsetFriction | number | 0.1 | The friction used out of bounds. This will be included in the calculations if you used a negative restitution. Numbers **from 0 to 1** are **valid** |
 | maxVelocity | number | 70 | The maximum velocity the element can reach. Numbers **greater than 0** are **valid**. |
 | resizeUpdate | boolean | false | Determines whether the draggable should be updated automatically after the browser is resized. |
-| onDown | Function | null | Callback which will be called if the user hits the element before the drag. Whether you return true or false determimes if the drag will be accepted. If you want to **preserve the default behaviour** you should **return the "isHit" parameter**. Parameter list: cursorX, cursorY, elementX, elementY, elementWidth, elementHeight, isHit |
-| onMove | Function | null | This will be triggered before the element is going to be moved. At this point the element does **not** have the latest translation. Parameter list: posX, posY, velX, velY. |
+| lockAxis | Object | null | Locked axis will be excluded from the translation. For example: {x: false, y: true}. This will lock the y axis. |
+| onUp | Function | null | Callback which will be called if the user released the element. |
+| onDown | Function | null | Callback which will be called if the user hits the element before the drag. Whether you return true or false determimes if the drag will be accepted. If you want to **preserve the default behaviour** you should **return the "hit" parameter**. Parameter list: hit, cursorX, cursorY, elementX, elementY, elementWidth, elementHeight |
+| onMove | Function | null | This will be triggered before the element is going to be moved. At this point the element does **not** have the latest translation. You can return an coordinate object like "{x: number, y: number}" to manipulate the position of the element. Parameter list: posX, posY, velX, velY. |
 | onTranslate | Function | null | This will be called if the translation settled. Parameter list:  elementX, elementY, elementWidth, elementHeight, elementBounds |
 
 ## License

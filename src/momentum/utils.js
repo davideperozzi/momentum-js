@@ -68,6 +68,21 @@ momentum.utils.setStyle = function(element, property, value, optVendorize) {
 };
 
 /**
+ * @public
+ * @param {Element} element
+ * @param {string} property
+ * @param {boolean=} optVendorize
+ */
+momentum.utils.removeStyle = function(element, property, optVendorize)
+{
+  element.style[property] = '';
+
+  if (optVendorize) {
+    element.style[momentum.utils.getVendor(property)] = '';
+  }
+};
+
+/**
  * @param {Element} element
  * @param {number} x
  * @param {number} y

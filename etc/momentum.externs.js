@@ -21,8 +21,13 @@
  *   offsetFriction: (number|undefined),
  *   maxVelocity: (number|undefined),
  *   resizeUpdate: (boolean|undefined),
+ *   lockAxis: ({
+ *     x: (boolean|undefined),
+ *     y: (boolean|undefined)
+ *   }|undefined),
  *   onDown: (Function|undefined),
  *   onMove: (Function|undefined),
+ *   onUp: (Function|undefined),
  *   onTranslate: (Function|undefined)
  * }}
  */
