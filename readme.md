@@ -44,6 +44,7 @@ http://momentum-js.davide-perozzi.de/
 | ------------- | ------------- | ------------- | ------------- |
 | container  | Element  | null | Container of the draggable element. Also the target for the "drag events" |
 | containerBounds | boolean | false | Determines if the bounds of the container should be used |
+| elementBounds | Element | null | Determines if the bounds of a element should be used |
 | bounds | Object | null | Set the bounds manually {x: number y: number, width: number, height: number} |
 | autoAnchor | boolean | false | Determines if the anchor should be set on the start position the user has clicked |
 | anchorX | number | 0.5 | The anchor point on the horizontal axis. |
