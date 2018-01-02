@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>momentum.js (Demo 3 - 2)</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui" />
+        <style>
+            body, html {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            .drag-wrapper {
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                width: 320px;
+                height: 30px;
+                overflow: hidden;
+                border-radius: 3px;
+                transform: translate(-50%, -50%);
+            }
+
+            .drag-container {
+                background-color: lightgray;
+                width: 100%;
+                height: 100%;
+            }
+
+            .drag-element {
+                position: absolute;
+                left: 0;
+                width: 60px;
+                height: 100%;
+                background: #2e2e2e;
+                cursor: move;
+                text-align: center;
+            }
+
+            .drag-element .progress {
+                display: inline-block;
+                font-size: 12px;
+                line-height: 30px;
+                font-family: Arial;
+                color: white;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="drag-wrapper">
+            <div class="drag-container">
+                <div class="drag-element">
+                    <div class="progress">0.0%</div>
+                </div>
+            </div>
+        </div>
+        <script src="./node_modules/google-closure-library/closure/goog/base.js"></script>
+        <script src="./etc/momentum.deps.js"></script>
+        <script>goog.require('momentum')</script>
+        <script>
+            var dragElement = document.querySelector('.drag-element');
+            var progressElement = dragElement.querySelector('.progress');
+
+            var dragger = new momentum.Draggable(dragElement, {
+                container: document.documentElement,
+                elementBounds: dragElement.parentElement,
+                resizeUpdate: true,
+                autoAnchor: true,
+                threshold: 0,
+                restitution: 0,
+                onTranslate: function(x, y, width, height, bounds) {
+                    progressElement.innerHTML = (x / (bounds.width - width) * 100).toFixed(1) + '%';
+                }
+            });
+        </script>
+    </body>
+</html>

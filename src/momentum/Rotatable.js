@@ -2,7 +2,7 @@ goog.provide('momentum.Rotatable');
 
 // momentum
 goog.require('momentum.Handler');
-goog.require('momentum.utils')
+goog.require('momentum.utils');
 
 /**
  * @constructor
@@ -78,7 +78,7 @@ momentum.Rotatable.prototype.handleDown_ = function(x, y) {
 	this.startRotation_ = rotation - this.lastRotation_;
 
 	return true;
-};	
+};
 
 /**
  * @private

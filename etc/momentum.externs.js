@@ -6,7 +6,8 @@
  * @typedef {{
  *   container: (Element|undefined),
  *   containerBounds: (boolean|undefined),
- *   bounds: ({
+ *   elementBounds: (Element|undefined),
+ *   bounds: (ClientRect|{
  *     x: number,
  *     y: number,
  *     width: number,

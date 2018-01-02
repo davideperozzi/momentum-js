@@ -101,12 +101,18 @@ momentum.Draggable.prototype.updateSettings = function() {
  * @param {boolean=} optNoCache
  */
 momentum.Draggable.prototype.updateBounds = function(optNoCache) {
+  if (this.config.elementBounds) {
+    if (optNoCache || ! this.config.bounds) {
+      this.config.bounds = this.config.elementBounds.getBoundingClientRect();
+    }
+  }
+
   if (this.config.bounds) {
     this.handler_.setBounds(
       this.config.bounds.x + this.positionOffset_.x,
       this.config.bounds.x + this.config.bounds.width - (this.elementBounds_.width - this.positionOffset_.x),
       this.config.bounds.y + this.positionOffset_.y,
-      this.config.bounds.y + this.config.bounds.height - (this.elementBounds_.width - this.positionOffset_.y)
+      this.config.bounds.y + this.config.bounds.height - (this.elementBounds_.height - this.positionOffset_.y)
     );
   }
   else if (this.config.containerBounds) {
@@ -293,7 +299,9 @@ momentum.Draggable.prototype.translate_ = function(x, y) {
       y,
       this.elementBounds_.width,
       this.elementBounds_.height,
-      this.handler_.getTargetBounds()
+      this.config.bounds
+        ? this.config.bounds
+        : this.handler_.getTargetBounds()
     );
   }
 };
