@@ -36,7 +36,7 @@ new momentum.Draggable(dragElement, {
 ```
 
 ### Some Draggable Demos
-http://momentum-js.davide-perozzi.de/
+http://momentum.davide-perozzi.de/
 
 ### The Draggable configuration
 
