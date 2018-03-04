@@ -24,13 +24,15 @@
     "url": "http://www.opensource.org/licenses/mit-license.php"
   },
   "devDependencies": {
-    "compression": "^1.6.2",
+    "compression": "^1.7.1",
+    "dat.gui": "^0.7.0",
+    "dj-gulp-tasks": "^1.0.60",
     "google-closure-compiler": "^20170218.0.0",
     "google-closure-library": "^20170218.0.1",
     "gulp": "^3.9.1",
     "gulp-closure-deps": "^0.4.0",
-    "gulp-connect": "^5.0.0",
-    "gulp-gzip": "^1.4.0",
-    "yargs": "^7.0.1"
+    "gulp-connect": "^5.2.0",
+    "gulp-gzip": "^1.4.2",
+    "gulp-sequence": "^1.0.0"
   }
 }

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>momentum.js (Demo 7)</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui" />
+        <style>
+            body, html {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            .drag-container {
+                position: relative;
+                width: 100%;
+                height: 100%;
+            }
+
+            .content-container {
+                height: 100vh;
+                width: 100%;
+                border-top: 2px solid black;
+                padding: 40px;
+                box-sizing: border-box;
+                font-family: Arial;
+            }
+
+            .overflow-container.overflow-container-1 {
+                height: 450px;
+                width: 500px;
+                box-sizing: border-box;
+                background-color: pink;
+            }
+
+            .overflow-container {
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                width: 500px;
+                height: 500px;
+                background-color: gray;
+                overflow: auto;
+                transform: translate(-50%, -50%);
+            }
+
+            .overflow-container::-webkit-scrollbar {
+                width: 5px;
+                height: 8px;
+                background-color: transparent;
+            }
+
+            .overflow-container::-webkit-scrollbar-thumb {
+                background-color: red;
+            }
+
+
+            .overflow-container-1::-webkit-scrollbar {
+                width: 5px;
+                height: 8px;
+                background-color: transparent;
+            }
+
+            .overflow-container-1::-webkit-scrollbar-thumb {
+                background-color: green;
+            }
+
+
+            .overflow-content {
+                height: 800px;
+            }
+
+            .drag-element {
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                width: 100px;
+                height: 100px;
+                background: #2e2e2e;
+                transform: translate(-50%, -50%);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="drag-container">
+            <div class="overflow-container overflow-container-1">
+                <div class="overflow-container">
+                    <div class="drag-element"></div>
+                    <div class="overflow-content"></div>
+                </div>
+            </div>
+        </div>
+        <div class="content-container">
+            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aut, eum. Soluta et veritatis dolorem, magni quae maiores autem. Magni amet vitae provident distinctio deleniti modi sit, accusantium alias? Quis, id.
+        </div>
+
+        <script src="./node_modules/google-closure-library/closure/goog/base.js"></script>
+        <script src="./etc/momentum.deps.js"></script>
+        <script>goog.require('momentum')</script>
+        <script>
+            var containerElement = document.querySelector('.drag-container');
+            var dragElement = containerElement.querySelector('.drag-element');
+
+            var dragger = new momentum.Draggable(dragElement, {
+                elementBounds: 'parent'
+            });
+        </script>
+    </body>
+</html>
