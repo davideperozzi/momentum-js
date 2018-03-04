@@ -13,10 +13,9 @@ closure.deps({
 });
 
 closure.compile({
-  'output': './dist/application.min.js',
+  'output': './dist/momentum.min.js',
   'files': [
     './node_modules/google-closure-library/closure/goog/base.js',
-    './node_modules/google-closure-library/closure/goog/dom/**/*.js',
     './src/momentum/**/*.js'
   ],
   'config': {
@@ -25,22 +24,21 @@ closure.compile({
       './etc/momentum.externs.js'
     ]
   }
-}, '-main');
+}, 'main');
 
 closure.compile({
-  'output': './dist/debug/application.min.js',
+  'output': './dist/debug/momentum.min.js',
   'files': [
     './node_modules/google-closure-library/closure/goog/base.js',
-    './node_modules/google-closure-library/closure/goog/dom/**/*.js',
     './src/**/*.js'
   ],
   'config': {
-    'closure_entry_point': 'momentum',
+    'closure_entry_point': 'momentumdebug',
     'externs': [
       './etc/momentum.externs.js'
     ]
   }
-}, '-debug');
+}, 'debug');
 
 gulp.task('compress-js', () => {
 	gulp.src('./dist/momentum.min.js')

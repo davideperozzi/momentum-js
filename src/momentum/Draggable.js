@@ -186,7 +186,9 @@ momentum.Draggable.prototype.updateBounds = function(optNoCache) {
         // Use the bounds of the element and change the position of the object.
         // This ensures the scroll position is included in the calculations
         var bounds = this.config.elementBounds.getBoundingClientRect();
-        var offset = momentum.utils.getPageOffset(this.config.elementBounds);
+        var offset = momentum.utils.getPageOffset(/** @type {Element} */ (
+          this.config.elementBounds
+        ));
 
         bounds.left = bounds.x = offset.x;
         bounds.top = bounds.y = offset.y;
@@ -297,10 +299,15 @@ momentum.Draggable.prototype.update = function(optPreventHandler) {
   this.startPosition_.y += containerOffset.y;
 
   // Remove old scroll containers
-  for (var i = 0, len = this.scrollContainers_.length; i < len; i++) {
-    if (scrollContainers.indexOf(this.scrollContainers_[i]) === -1) {
-      this.scrollContainers_[i].removeEventListener('scroll');
-      this.scrollContainers_.splice(i, 1);
+  var oldContainers = this.scrollContainers_.slice(0);
+  this.scrollContainers_ = [];
+
+  for (var i = 0, len = oldContainers.length; i < len; i++) {
+    if (scrollContainers.indexOf(oldContainers[i]) === -1) {
+      oldContainers[i].removeEventListener('scroll',
+        this.handleContainerScroll_.bind(this), false);
+    } else {
+      this.scrollContainers_.push(oldContainers[i]);
     }
   }
 
@@ -309,9 +316,8 @@ momentum.Draggable.prototype.update = function(optPreventHandler) {
     if (this.scrollContainers_.indexOf(scrollContainers[i]) === -1) {
       this.scrollContainers_.push(scrollContainers[i]);
 
-      scrollContainers[i].addEventListener('scroll', function(){
-        setTimeout(this.updateScrollPositions.bind(this), 0);
-      }.bind(this), false);
+      scrollContainers[i].addEventListener('scroll',
+        this.handleContainerScroll_.bind(this), false);
     }
   }
 
@@ -325,6 +331,14 @@ momentum.Draggable.prototype.update = function(optPreventHandler) {
   if ( ! optPreventHandler) {
     this.handler_.update();
   }
+};
+
+/**
+ * @private
+ */
+momentum.Draggable.prototype.handleContainerScroll_ = function()
+{
+  setTimeout(this.updateScrollPositions.bind(this), 0);
 };
 
 /**
@@ -404,27 +418,6 @@ momentum.Draggable.prototype.init_ = function() {
       this.updateBounds(true);
     }.bind(this), 0);
   }.bind(this), false);
-};
-
-/**
- * @private
- * @return {Array<Element>}
- */
-momentum.Draggable.prototype.getScrollContainers_ = function()
-{
-  var containers = [];
-
-  momentum.utils.getAncestor(this.element_, function(parent){
-    var overflow = momentum.utils.getStyle(parentElement, 'overflow');
-
-    if (overflow == 'auto' || overflow == 'scroll') {
-      containers.push(scrollContainers);
-    }
-
-    return parent == this.handler_.getTarget();
-  }.bind(this));
-
-  return containers;
 };
 
 /**

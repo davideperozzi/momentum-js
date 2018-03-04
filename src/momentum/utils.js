@@ -1,8 +1,5 @@
 goog.provide('momentum.utils');
 
-// goog
-goog.require('goog.dom');
-
 // momentum
 goog.require('momentum.Coordinate');
 
@@ -189,7 +186,22 @@ momentum.utils.getAncestorByTagName = function(element, opt_tag) {
  * @return {!Document}
  */
 momentum.utils.getOwnerDocument = function(node) {
-  return node.nodeType == Node.DOCUMENT_NODE ? node : node.ownerDocument || node.document;
+  return /** @type {!Document} */ (
+    node.nodeType == Node.DOCUMENT_NODE ? node : node.ownerDocument || node.document);
+};
+
+/**
+ * @public
+ * @see {goog.dom.getDocumentScroll}
+ * @return {momentum.Coordinate}
+ */
+momentum.utils.getDocumentScroll = function() {
+  var element = document.scrollingElement || document.documentElement;
+
+  return new momentum.Coordinate(
+    window.pageXOffset || element.scrollLeft,
+    window.pageYOffset || element.scrollTop
+  );
 };
 
 /**
@@ -202,7 +214,7 @@ momentum.utils.getPageOffset = function(element) {
   var ownerDoc = momentum.utils.getOwnerDocument(element);
   var offsetPosition = new momentum.Coordinate();
   var boundingRect = element.getBoundingClientRect();
-  var scrollPosition = goog.dom.getDocumentScroll();
+  var scrollPosition = momentum.utils.getDocumentScroll();
 
   offsetPosition.x = boundingRect.left + scrollPosition.x;
   offsetPosition.y = boundingRect.top + scrollPosition.y;

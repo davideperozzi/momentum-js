@@ -7,7 +7,7 @@ goog.addDependency('../../../../src/momentum/HandlerComponent.js', ['momentum.Ha
 goog.addDependency('../../../../src/momentum/Rotatable.js', ['momentum.Rotatable'], ['momentum.Handler', 'momentum.HandlerComponent', 'momentum.utils'], false);
 goog.addDependency('../../../../src/momentum/TrackingPoint.js', ['momentum.TrackingPoint'], ['momentum.Coordinate'], false);
 goog.addDependency('../../../../src/momentum/index.js', ['momentum'], ['momentum.Draggable', 'momentum.Handler', 'momentum.Rotatable'], false);
-goog.addDependency('../../../../src/momentum/utils.js', ['momentum.utils'], ['goog.dom', 'momentum.Coordinate'], false);
+goog.addDependency('../../../../src/momentum/utils.js', ['momentum.utils'], ['momentum.Coordinate'], false);
 goog.addDependency('../../../../src/momentumdebug/Configurator.js', ['momentumdebug.Configurator'], ['momentum.Draggable', 'momentum.utils', 'momentumdebug.ScriptLoader'], false);
 goog.addDependency('../../../../src/momentumdebug/ScriptLoader.js', ['momentumdebug.ScriptLoader'], [], false);
 goog.addDependency('../../../../src/momentumdebug/index.js', ['momentumdebug'], ['momentum', 'momentumdebug.Configurator'], false);

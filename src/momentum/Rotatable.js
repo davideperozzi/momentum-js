@@ -106,4 +106,4 @@ momentum.Rotatable.prototype.handleMove_ = function(x, y) {
  */
 momentum.Rotatable.prototype.getHandler = function() {
   return this.handler_;
-}
+};
