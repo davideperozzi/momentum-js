@@ -1,54 +1,71 @@
 const gulp = require('gulp');
-const path = require("path");
 const gzip = require('gulp-gzip');
-const argv = require('yargs').alias('d', 'dist').argv;
 const connect = require('gulp-connect');
-const closureDeps = require('gulp-closure-deps');
-const compression = require("compression")
-const closureCompiler = require('google-closure-compiler').gulp();
+const gulpSequence = require('gulp-sequence');
+const closure = require('dj-gulp-tasks/closure');
 
-gulp.task('deps-js', () => {
-	return gulp.src('./src/**/*.js')
-		.pipe(closureDeps({
-			fileName: 'momentum.deps.js',
-			prefix: '../../../../'
-		}))
-		.pipe(gulp.dest('./etc'))
+closure.deps({
+  'output': './etc/momentum.deps.js',
+  'prefix': '../../../../',
+  'files': [
+    './src/**/*.js'
+  ]
 });
 
-gulp.task('build-js', () => {
-	return gulp.src([
-      './node_modules/google-closure-library/closure/goog/base.js',
-      './src/**/*.js'
-    ]).pipe(closureCompiler({
-  		generate_exports: '1',
-  		compilation_level: 'ADVANCED',
-  		warning_level: 'VERBOSE',
-  		language_in: 'ECMASCRIPT5_STRICT',
-  		language_out: 'ECMASCRIPT5_STRICT',
-  		js_output_file: 'momentum.min.js',
-  		closure_entry_point: 'momentum',
-  		externs: ['./etc/momentum.externs.js']
-	}))
-	.pipe(gulp.dest('./dist/'));
-});
+closure.compile({
+  'output': './dist/momentum.min.js',
+  'files': [
+    './node_modules/google-closure-library/closure/goog/base.js',
+    './src/momentum/**/*.js'
+  ],
+  'config': {
+    'closure_entry_point': 'momentum',
+    'externs': [
+      './etc/momentum.externs.js'
+    ]
+  }
+}, 'main');
+
+closure.compile({
+  'output': './dist/debug/momentum.min.js',
+  'files': [
+    './node_modules/google-closure-library/closure/goog/base.js',
+    './src/**/*.js'
+  ],
+  'config': {
+    'closure_entry_point': 'momentumdebug',
+    'externs': [
+      './etc/momentum.externs.js'
+    ]
+  }
+}, 'debug');
 
 gulp.task('compress-js', () => {
-	return gulp.src('./dist/momentum.min.js')
-	    	   .pipe(gzip())
-	    	   .pipe(gulp.dest('./dist/'));
+	gulp.src('./dist/momentum.min.js')
+	 .pipe(gzip())
+	 .pipe(gulp.dest('./dist/'));
+
+  gulp.src('./dist/debug/momentum.min.js')
+   .pipe(gzip())
+   .pipe(gulp.dest('./dist/debug/'));
 });
 
-gulp.task('build', ['build-js'], () => {
-	return gulp.start('compress-js');
+gulp.task('build', gulpSequence(
+  'dj-closure-compile-main',
+  'dj-closure-compile-debug',
+  'compress-js'
+));
+
+gulp.task('server', () => {
+  return connect.server({
+    root: ['./demos', './'],
+    livereload: true,
+    port: 8000
+  });
 });
 
 gulp.task('start', () => {
-	return connect.server({
-		root: ['./demos', './'],
-		livereload: true,
-		port: 8000
-	});
+	gulp.start('dj-closure-deps-watch', 'server');
 });
 
 gulp.task('default', ['build']);

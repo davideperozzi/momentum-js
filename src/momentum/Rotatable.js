@@ -3,10 +3,12 @@ goog.provide('momentum.Rotatable');
 // momentum
 goog.require('momentum.Handler');
 goog.require('momentum.utils');
+goog.require('momentum.HandlerComponent');
 
 /**
  * @constructor
  * @param {Element} element
+ * @extends {momentum.HandlerComponent}
  */
 momentum.Rotatable = function(element) {
 	/**
@@ -44,6 +46,11 @@ momentum.Rotatable = function(element) {
 	 */
 	this.init_();
 };
+
+goog.inherits(
+  momentum.Rotatable,
+  momentum.HandlerComponent
+);
 
 /**
  * @private
@@ -92,4 +99,11 @@ momentum.Rotatable.prototype.handleMove_ = function(x, y) {
   this.lastRotation_ %= 360;
 
   momentum.utils.setStyle(this.element_, 'transform', 'rotate(' + this.lastRotation_ + 'deg)');
+};
+
+/**
+ * {@inheritDoc}
+ */
+momentum.Rotatable.prototype.getHandler = function() {
+  return this.handler_;
 };

@@ -291,6 +291,14 @@ momentum.Handler.prototype.getFriction = function() {
 
 /**
  * @export
+ * @return {momentum.Coordinate}
+ */
+momentum.Handler.prototype.getOffsetFriction = function() {
+  return this.offsetFriction_;
+};
+
+/**
+ * @export
  * @return {number}
  */
 momentum.Handler.prototype.getThreshold = function() {

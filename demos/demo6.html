@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>momentum.js (Demo 6)</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui" />
+        <style>
+            body, html {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            .drag-wrapper {
+                display: flex;
+                width: 100%;
+                height: 100%;
+                flex-direction: row;
+            }
+
+            .drag-container,
+            .drag-container {
+                position: relative;
+                width: 50%;
+                height: 100%;
+                box-sizing: border-box;
+            }
+
+            .drag-container:not(:last-child) {
+                border-right: 1px solid black;
+            }
+
+            .drag-element-1,
+            .drag-element-2 {
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                width: 100px;
+                height: 100px;
+                background: #2e2e2e;
+                transform: translate(-50%, -50%);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="drag-wrapper">
+            <div class="drag-container drag-container-1">
+                <div class="drag-element-1"></div>
+            </div>
+            <div class="drag-container drag-container-2">
+                <div class="drag-element-2"></div>
+            </div>
+        </div>
+        <script src="./node_modules/dat.gui/build/dat.gui.min.js"></script>
+        <script src="./node_modules/google-closure-library/closure/goog/base.js"></script>
+        <script src="./etc/momentum.deps.js"></script>
+        <script>goog.require('momentum')</script>
+        <script>goog.require('momentumdebug')</script>
+        <script>
+            // Drag element 1
+            var containerElement1 = document.querySelector('.drag-container-1');
+            var dragElement1 = containerElement1.querySelector('.drag-element-1');
+            var draggable1 = new momentum.Draggable(dragElement1, {
+                elementBounds: 'parent'
+            });
+
+            // Drag element 2
+            var containerElement2 = document.querySelector('.drag-container-2');
+            var dragElement2 = containerElement2.querySelector('.drag-element-2');
+            var draggable2 = new momentum.Draggable(dragElement2, {
+                elementBounds: 'parent',
+                restitution: 0.25
+            });
+
+            // Configurators
+            var configurator1 = new momentumdebug.Configurator(draggable1, containerElement1);
+            var configurator2 = new momentumdebug.Configurator(draggable2, containerElement2);
+        </script>
+    </body>
+</html>

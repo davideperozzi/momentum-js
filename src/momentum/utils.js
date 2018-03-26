@@ -1,5 +1,8 @@
 goog.provide('momentum.utils');
 
+// momentum
+goog.require('momentum.Coordinate');
+
 /**
  * @private
  * @type {string}
@@ -89,4 +92,132 @@ momentum.utils.removeStyle = function(element, property, optVendorize)
  */
 momentum.utils.setTranslation = function(element, x, y) {
   momentum.utils.setStyle(element, 'transform', 'translate3d(' + x + 'px,' + y + 'px,0)', true);
+};
+
+/**
+ * @public
+ * @see {goog.object.extend}
+ * @param {Object} target
+ * @param {...Object} var_args
+ */
+momentum.utils.extendObject = function(target, var_args) {
+  var key;
+  var source;
+  var prorotypeFields = [
+    'constructor',
+    'hasOwnProperty',
+    'isPrototypeOf',
+    'propertyIsEnumerable',
+    'toLocaleString',
+    'toString',
+    'valueOf'
+  ];
+
+  for (var i = 1; i < arguments.length; i++) {
+    source = arguments[i];
+
+    for (key in source) {
+      target[key] = source[key];
+    }
+
+    for (var j = 0; j < prorotypeFields.length; j++) {
+      key = prorotypeFields[j];
+
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    }
+  }
+};
+
+/**
+ * @public
+ * @see {goog.dom.getAncestor}
+ * @param {Node} element
+ * @param {function(Node) : boolean} matcher
+ * @param {boolean=} opt_includeNode
+ * @param {number=} opt_maxSearchSteps
+ * @return {Node}
+ */
+momentum.utils.getAncestor = function(element, matcher, opt_includeNode, opt_maxSearchSteps) {
+  if (element && ! opt_includeNode) {
+    element = element.parentNode;
+  }
+
+  var steps = 0;
+
+  while (element && (opt_maxSearchSteps == null || steps <= opt_maxSearchSteps)) {
+    if (matcher(element)) {
+      return element;
+    }
+
+    element = element.parentNode;
+    steps++;
+  }
+
+  return null;
+};
+
+/**
+ * @public
+ * @see {goog.dom.getAncestorByTagNameAndClass}
+ * @param {Node} element
+ * @param {string=} opt_tag
+ * @return {?R}
+ * @template T
+ * @template R := cond(isUnknown(T), 'Element', T) =:
+ */
+momentum.utils.getAncestorByTagName = function(element, opt_tag) {
+  if ( ! opt_tag) {
+    return null;
+  }
+
+  var tagName = opt_tag ? String(opt_tag).toUpperCase() : null;
+
+  return /** @type {Element} */ (momentum.utils.getAncestor(element, function(node) {
+    return !tagName || node.nodeName == tagName;
+  }, true));
+};
+
+/**
+ * @public
+ * @see {goog.dom.getOwnerDocument}
+ * @param {Node|Window} node
+ * @return {!Document}
+ */
+momentum.utils.getOwnerDocument = function(node) {
+  return /** @type {!Document} */ (
+    node.nodeType == Node.DOCUMENT_NODE ? node : node.ownerDocument || node.document);
+};
+
+/**
+ * @public
+ * @see {goog.dom.getDocumentScroll}
+ * @return {momentum.Coordinate}
+ */
+momentum.utils.getDocumentScroll = function() {
+  var element = document.scrollingElement || document.documentElement;
+
+  return new momentum.Coordinate(
+    window.pageXOffset || element.scrollLeft,
+    window.pageYOffset || element.scrollTop
+  );
+};
+
+/**
+ * @public
+ * @see {gogo.style.getPageOffset}
+ * @param {Element} element
+ * @return {momentum.Coordinate}
+ */
+momentum.utils.getPageOffset = function(element) {
+  var ownerDoc = momentum.utils.getOwnerDocument(element);
+  var offsetPosition = new momentum.Coordinate();
+  var boundingRect = element.getBoundingClientRect();
+  var scrollPosition = momentum.utils.getDocumentScroll();
+
+  offsetPosition.x = boundingRect.left + scrollPosition.x;
+  offsetPosition.y = boundingRect.top + scrollPosition.y;
+
+  return offsetPosition;
 };

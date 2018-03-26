@@ -2,6 +2,7 @@ goog.provide('momentum.Draggable');
 
 // momentum
 goog.require('momentum.Handler');
+goog.require('momentum.HandlerComponent');
 goog.require('momentum.Coordinate');
 goog.require('momentum.utils');
 
@@ -9,13 +10,32 @@ goog.require('momentum.utils');
  * @constructor
  * @param {Element} element
  * @param {MomentumDraggableConfig} optConfig
+ * @extends {momentum.HandlerComponent}
  */
 momentum.Draggable = function(element, optConfig) {
+  momentum.Draggable.base(this, 'constructor');
+
   /**
    * @private
    * @type {Element}
    */
   this.element_ = element;
+
+  /**
+   * @public
+   * @type {MomentumDraggableConfig}
+   */
+  this.defaults_ = {
+    // @depcrecated: containerBounds is deprecated and will be removed in the future.
+    //               Use elementBounds instead
+    //
+    // containerBounds: true,
+    container: document.documentElement,
+    elementBounds: 'container',
+    restitution: -0.6,
+    resizeUpdate: true,
+    autoAnchor: true
+  };
 
   /**
    * @public
@@ -39,7 +59,19 @@ momentum.Draggable = function(element, optConfig) {
    * @private
    * @type {momentum.Coordinate}
    */
+  this.lastTranslation_ = new momentum.Coordinate();
+
+  /**
+   * @private
+   * @type {momentum.Coordinate}
+   */
   this.positionOffset_ = new momentum.Coordinate();
+
+  /**
+   * @private
+   * @type {momentum.Coordinate}
+   */
+  this.scrollOffset_ = new momentum.Coordinate();
 
   /**
    * @private
@@ -60,10 +92,27 @@ momentum.Draggable = function(element, optConfig) {
   this.destroyed_ = false;
 
   /**
+   * @private
+   * @type {boolean}
+   */
+  this.hasTranslation_ = false;
+
+  /**
+   * @private
+   * @type {Array<Element>}
+   */
+  this.scrollContainers_ = [];
+
+  /**
    * Initialize self
    */
   this.init_();
 };
+
+goog.inherits(
+  momentum.Draggable,
+  momentum.HandlerComponent
+);
 
 /**
  * @export
@@ -75,6 +124,14 @@ momentum.Draggable.prototype.config = {};
  * @export
  */
 momentum.Draggable.prototype.updateSettings = function() {
+  // Merge config
+  var config = this.defaults_;
+
+  momentum.utils.extendObject(config, this.config);
+
+  this.config = config;
+
+  // Notify handler about the new settings
   if (this.config.restitution && !isNaN(this.config.restitution)) {
     this.handler_.setRestitution(this.config.restitution);
   }
@@ -103,7 +160,41 @@ momentum.Draggable.prototype.updateSettings = function() {
 momentum.Draggable.prototype.updateBounds = function(optNoCache) {
   if (this.config.elementBounds) {
     if (optNoCache || ! this.config.bounds) {
-      this.config.bounds = this.config.elementBounds.getBoundingClientRect();
+      if (goog.isString(this.config.elementBounds)) {
+        switch (this.config.elementBounds) {
+          case 'parent':
+            var parentNode = /** @type {Element} */ (this.element_.parentNode);
+
+            if (parentNode != this.element_) {
+              this.config.elementBounds = parentNode;
+            }
+            else {
+              this.config.elementBounds = this.config.container;
+            }
+            break;
+          case 'container':
+            this.config.elementBounds = this.config.container || document.documentElement;
+            break;
+        }
+
+        if (this.config.elementBounds.nodeType === Node.DOCUMENT_NODE) {
+          this.config.elementBounds = document.documentElement;
+        }
+      }
+
+      if (this.config.elementBounds.nodeType === Node.ELEMENT_NODE) {
+        // Use the bounds of the element and change the position of the object.
+        // This ensures the scroll position is included in the calculations
+        var bounds = this.config.elementBounds.getBoundingClientRect();
+        var offset = momentum.utils.getPageOffset(/** @type {Element} */ (
+          this.config.elementBounds
+        ));
+
+        bounds.left = bounds.x = offset.x;
+        bounds.top = bounds.y = offset.y;
+
+        this.config.bounds = bounds;
+      }
     }
   }
 
@@ -115,18 +206,36 @@ momentum.Draggable.prototype.updateBounds = function(optNoCache) {
       this.config.bounds.y + this.config.bounds.height - (this.elementBounds_.height - this.positionOffset_.y)
     );
   }
-  else if (this.config.containerBounds) {
-    var containerBounds = this.handler_.getTargetBounds(optNoCache);
-    var overflowX = this.elementBounds_.width > containerBounds.width;
-    var overflowY = this.elementBounds_.height > containerBounds.height;
+};
 
-    this.handler_.setBounds(
-      overflowX ? this.positionOffset_.x + containerBounds.width - this.elementBounds_.width : this.positionOffset_.x,
-      overflowX ? this.positionOffset_.x : containerBounds.width - (this.elementBounds_.width - this.positionOffset_.x),
-      overflowY ? this.positionOffset_.y + containerBounds.height - this.elementBounds_.height : this.positionOffset_.y,
-      overflowY ? this.positionOffset_.y : containerBounds.height - (this.elementBounds_.height - this.positionOffset_.y)
-    );
+/**
+ * @export
+ */
+momentum.Draggable.prototype.updateScrollPositions = function()
+{
+  this.scrollOffset_.x = 0;
+  this.scrollOffset_.y = 0;
+
+  for (var i = 0, len = this.scrollContainers_.length; i < len; i++) {
+    var container = this.scrollContainers_[i];
+    var bounds = container.getBoundingClientRect();
+
+    if (container.scrollHeight > bounds.height) {
+      this.scrollOffset_.y += container.scrollTop;
+    }
+
+    if (container.scrollWidth > bounds.width) {
+      this.scrollOffset_.x += container.scrollLeft;
+    }
   }
+};
+
+/**
+ * {@inheritDoc}
+ */
+momentum.Draggable.prototype.getHandler = function()
+{
+  return this.handler_;
 };
 
 /**
@@ -136,13 +245,17 @@ momentum.Draggable.prototype.updateBounds = function(optNoCache) {
 momentum.Draggable.prototype.update = function(optPreventHandler) {
   optPreventHandler = optPreventHandler && optPreventHandler === true;
 
+  if ( ! optPreventHandler) {
+    this.updateSettings();
+  }
+
   // Update element bounds and offsets
   this.elementBounds_ = this.element_.getBoundingClientRect();
 
   // Update anchor points
-  if (!this.config.autoAnchor) {
-    this.anchorPoint_.x = this.config.anchorX || this.anchorPoint_.x;
-    this.anchorPoint_.y = this.config.anchorY || this.anchorPoint_.y;
+  if ( ! this.config.autoAnchor) {
+    this.anchorPoint_.x = goog.isDef(this.config.anchorX) ? this.config.anchorX : this.anchorPoint_.x;
+    this.anchorPoint_.y = goog.isDef(this.config.anchorY) ? this.config.anchorY : this.anchorPoint_.y;
     this.positionOffset_.x = this.elementBounds_.width * this.anchorPoint_.x;
     this.positionOffset_.y = this.elementBounds_.height * this.anchorPoint_.y;
   }
@@ -151,27 +264,32 @@ momentum.Draggable.prototype.update = function(optPreventHandler) {
   this.startPosition_.x = this.element_.offsetLeft;
   this.startPosition_.y = this.element_.offsetTop;
 
+  var scrollContainers = [];
   var containerOffset = new momentum.Coordinate();
   var parentElement = this.element_.parentElement;
 
   while (parentElement) {
-    if (parentElement != this.handler_.getTarget()) {
-      var position = momentum.utils.getStyle(parentElement, 'position');
+    if (parentElement == this.handler_.getTarget()) {
+      break;
+    }
 
-      if (position == 'relative' || position == 'absolute') {
-        var bounds = parentElement.getBoundingClientRect();
+    var position = momentum.utils.getStyle(parentElement, 'position');
+    var overflow = momentum.utils.getStyle(parentElement, 'overflow');
 
-        if (bounds.left > containerOffset.x) {
-          containerOffset.x = bounds.left;
-        }
+    if (position == 'relative' || position == 'absolute') {
+      var offset = momentum.utils.getPageOffset(parentElement);
 
-        if (bounds.top > containerOffset.y) {
-          containerOffset.y = bounds.top;
-        }
+      if (offset.x > containerOffset.x) {
+        containerOffset.x = offset.x;
+      }
+
+      if (offset.y > containerOffset.y) {
+        containerOffset.y = offset.y;
       }
     }
-    else {
-      break;
+
+    if (overflow == 'auto' || overflow == 'scroll') {
+      scrollContainers.push(parentElement);
     }
 
     parentElement = parentElement.parentElement;
@@ -180,6 +298,32 @@ momentum.Draggable.prototype.update = function(optPreventHandler) {
   this.startPosition_.x += containerOffset.x;
   this.startPosition_.y += containerOffset.y;
 
+  // Remove old scroll containers
+  var oldContainers = this.scrollContainers_.slice(0);
+  this.scrollContainers_ = [];
+
+  for (var i = 0, len = oldContainers.length; i < len; i++) {
+    if (scrollContainers.indexOf(oldContainers[i]) === -1) {
+      oldContainers[i].removeEventListener('scroll',
+        this.handleContainerScroll_.bind(this), false);
+    } else {
+      this.scrollContainers_.push(oldContainers[i]);
+    }
+  }
+
+  // Add new scroll containers
+  for (var i = 0, len = scrollContainers.length; i < len; i++) {
+    if (this.scrollContainers_.indexOf(scrollContainers[i]) === -1) {
+      this.scrollContainers_.push(scrollContainers[i]);
+
+      scrollContainers[i].addEventListener('scroll',
+        this.handleContainerScroll_.bind(this), false);
+    }
+  }
+
+  // Update scroll positions
+  this.updateScrollPositions();
+
   // Update bounds with a refresh
   this.updateBounds(true);
 
@@ -187,6 +331,14 @@ momentum.Draggable.prototype.update = function(optPreventHandler) {
   if ( ! optPreventHandler) {
     this.handler_.update();
   }
+};
+
+/**
+ * @private
+ */
+momentum.Draggable.prototype.handleContainerScroll_ = function()
+{
+  setTimeout(this.updateScrollPositions.bind(this), 0);
 };
 
 /**
@@ -217,6 +369,7 @@ momentum.Draggable.prototype.restore = function() {
   this.destroyed_ = false;
 
   this.init_();
+  this.handlerChanged();
 };
 
 /**
@@ -233,7 +386,7 @@ momentum.Draggable.prototype.init_ = function() {
   this.updateSettings();
 
   // Set the initial position
-  this.setInitialPostiion_();
+  this.setInitialPosition_();
 
   // Initial update
   this.update();
@@ -241,22 +394,36 @@ momentum.Draggable.prototype.init_ = function() {
   // Init handler
   this.handler_.init();
 
+  // Disable translation
+  this.hasTranslation_ = false;
+
+  // Reset last translation
+  this.lastTranslation_.x = 0;
+  this.lastTranslation_.y = 0;
+
   // Listen for browser events
   if (this.config.resizeUpdate) {
     window.addEventListener('resize', function(){
       setTimeout(function(){
-        this.setInitialPostiion_();
+        this.setInitialPosition_();
         this.update();
       }.bind(this), 0);
     }.bind(this), false);
   }
+
+  // Scroll elements
+  window.addEventListener('scroll', function(){
+    setTimeout(function(){
+      this.updateScrollPositions();
+      this.updateBounds(true);
+    }.bind(this), 0);
+  }.bind(this), false);
 };
 
 /**
  * @private
  */
-momentum.Draggable.prototype.setInitialPostiion_ = function()
-{
+momentum.Draggable.prototype.setInitialPosition_ = function() {
   var initialPosition = this.handler_.getRelativeElementPosition(this.element_);
 
   this.handler_.setPosition(
@@ -276,22 +443,26 @@ momentum.Draggable.prototype.translate_ = function(x, y) {
     return;
   }
 
-  x = x - this.positionOffset_.x - this.startPosition_.x;
-  y = y - this.positionOffset_.y - this.startPosition_.y;
+  x = x - this.positionOffset_.x - this.startPosition_.x + this.scrollOffset_.x;
+  y = y - this.positionOffset_.y - this.startPosition_.y + this.scrollOffset_.y;
 
-  if (this.config.lockAxis) {
+  if (this.config.lockAxis && this.hasTranslation_) {
     if (goog.isObject(this.config.lockAxis)) {
-      if (true == this.config.lockAxis.y) {
-        y = 0;
+      if (true == this.config.lockAxis.x) {
+        x = this.lastTranslation_.x;
       }
 
-      if (true == this.config.lockAxis.x) {
-        x = 0;
+      if (true == this.config.lockAxis.y) {
+        y = this.lastTranslation_.y;
       }
     }
   }
 
   momentum.utils.setTranslation(this.element_, x, y);
+
+  this.lastTranslation_.x = x;
+  this.lastTranslation_.y = y;
+  this.hasTranslation_ = true;
 
   if (this.config.onTranslate) {
     this.config.onTranslate(
