@@ -67,6 +67,16 @@ dat.GUI.prototype.add = function(obj, name, min, max){};
 
 /**
  * @public
+ */
+dat.GUI.prototype.close = function(){};
+
+/**
+ * @public
+ */
+dat.GUI.prototype.open = function(){};
+
+/**
+ * @public
  * @param {string} name
  * @return {dat.GUI.Folder}
  */

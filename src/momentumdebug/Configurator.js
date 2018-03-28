@@ -188,6 +188,77 @@ momentumdebug.Configurator.prototype.init_ = function()
 };
 
 /**
+ * @export
+ */
+momentumdebug.Configurator.prototype.close = function()
+{
+  this.datGui_.close();
+};
+
+/**
+ * @export
+ */
+momentumdebug.Configurator.prototype.open = function()
+{
+  this.datGui_.open();
+};
+
+
+/**
+ * @export
+ */
+momentumdebug.Configurator.prototype.closeFolders = function()
+{
+  for (var i = 0, len = this.folders_.length; i < len; i++) {
+    this.folders_[i].close();
+  }
+};
+
+/**
+ * @export
+ */
+momentumdebug.Configurator.prototype.openFolders = function()
+{
+  for (var i = 0, len = this.folders_.length; i < len; i++) {
+    this.folders_[i].open();
+  }
+};
+
+/**
+ * @export
+ * @param {string} name
+ * @return {boolean}
+ */
+momentumdebug.Configurator.prototype.closeFolder = function(name)
+{
+  for (var i = 0, len = this.folders_.length; i < len; i++) {
+    if (this.folders_[i].name == name) {
+      this.folders_[i].close();
+      return true;
+    }
+  }
+
+  return false;
+};
+
+/**
+ * @export
+ * @param {string} name
+ * @return {boolean}
+ */
+momentumdebug.Configurator.prototype.openFolder = function(name)
+{
+  for (var i = 0, len = this.folders_.length; i < len; i++) {
+    if (this.folders_[i].name == name) {
+      this.folders_[i].open();
+      return true;
+    }
+  }
+
+  return false;
+};
+
+/**
  * @private
  */
 momentumdebug.Configurator.prototype.handleHandlerChange_ = function()
