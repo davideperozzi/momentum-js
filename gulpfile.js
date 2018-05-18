@@ -67,6 +67,7 @@ gulp.task('build', gulpSequence(
 
 gulp.task('server', () => {
   return connect.server({
+    host: '0.0.0.0',
     root: ['./demos', './'],
     livereload: true,
     port: 8000

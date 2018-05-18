@@ -322,7 +322,7 @@ momentumdebug.Configurator.prototype.setHandlerFields_ = function(handler)
 
   offsetFrictionElement = momentum.utils.getAncestorByTagName(offsetFrictionItem.domElement, 'li');
 
-  if (controlInterface.restitution >= 0) {
+  if (controlInterface['restitution'] >= 0) {
     offsetFrictionElement.style.display = 'none';
   }
 
@@ -335,7 +335,7 @@ momentumdebug.Configurator.prototype.setHandlerFields_ = function(handler)
   });
 
   // Velocity info
-  var maxVelocity = controlInterface.maxVelocity;
+  var maxVelocity = controlInterface['maxVelocity'];
   var velItemX = folder.add(controlInterface, 'velocityX', -maxVelocity, maxVelocity).step(.05).name('X-Velocity').listen();
   var velItemY = folder.add(controlInterface, 'velocityY', -maxVelocity, maxVelocity).step(.05).name('Y-Velocity').listen();
 
@@ -347,8 +347,8 @@ momentumdebug.Configurator.prototype.setHandlerFields_ = function(handler)
   });
 
   handler.onMove(function(posX, posY, velX, velY){
-    controlInterface.velocityX = velX;
-    controlInterface.velocityY = velY;
+    controlInterface['velocityX'] = velX;
+    controlInterface['velocityY'] = velY;
   });
 
   // Open folder on default
@@ -380,11 +380,11 @@ momentumdebug.Configurator.prototype.setDraggableFields_ = function(draggable)
     }
 
     if ( ! value && ! goog.isDef(draggable.config.anchorX)) {
-      draggable.config.anchorX = controlInterface.anchorX;
+      draggable.config.anchorX = controlInterface['anchorX'];
     }
 
     if ( ! value && ! goog.isDef(draggable.config.anchorY)) {
-      draggable.config.anchorY = controlInterface.anchorY;
+      draggable.config.anchorY = controlInterface['anchorY'];
     }
 
     draggable.update(true);

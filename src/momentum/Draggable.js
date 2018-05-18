@@ -151,6 +151,10 @@ momentum.Draggable.prototype.updateSettings = function() {
   if (this.config.maxVelocity && !isNaN(this.config.maxVelocity)) {
     this.handler_.setMaxVelocity(this.config.maxVelocity);
   }
+
+  if (this.config.preventMove && typeof this.config.preventMove === 'function') {
+    this.handler_.setPreventMoveCheck(this.config.preventMove);
+  }
 };
 
 momentum.Draggable.prototype._updateBounds = function(optNoCache) {
