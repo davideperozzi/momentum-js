@@ -151,6 +151,33 @@ momentum.Draggable.prototype.updateSettings = function() {
   if (this.config.maxVelocity && !isNaN(this.config.maxVelocity)) {
     this.handler_.setMaxVelocity(this.config.maxVelocity);
   }
+
+  if (this.config.preventMove && typeof this.config.preventMove === 'function') {
+    this.handler_.setPreventMoveCheck(this.config.preventMove);
+  }
+};
+
+momentum.Draggable.prototype._updateBounds = function(optNoCache) {
+  if (this.config.bounds) {
+    this.handler_.setBounds(
+      this.config.bounds.x + this.positionOffset_.x,
+      this.config.bounds.x + this.config.bounds.width - (this.elementBounds_.width - this.positionOffset_.x),
+      this.config.bounds.y + this.positionOffset_.y,
+      this.config.bounds.y + this.config.bounds.height - (this.elementBounds_.width - this.positionOffset_.y)
+    );
+  }
+  else if (this.config.containerBounds) {
+    var containerBounds = this.handler_.getTargetBounds(optNoCache);
+    var overflowX = this.elementBounds_.width > containerBounds.width;
+    var overflowY = this.elementBounds_.height > containerBounds.height;
+
+    this.handler_.setBounds(
+      overflowX ? this.positionOffset_.x + containerBounds.width - this.elementBounds_.width : this.positionOffset_.x,
+      overflowX ? this.positionOffset_.x : containerBounds.width - (this.elementBounds_.width - this.positionOffset_.x),
+      overflowY ? this.positionOffset_.y + containerBounds.height - this.elementBounds_.height : this.positionOffset_.y,
+      overflowY ? this.positionOffset_.y : containerBounds.height - (this.elementBounds_.height - this.positionOffset_.y)
+    );
+  }
 };
 
 /**
@@ -199,11 +226,32 @@ momentum.Draggable.prototype.updateBounds = function(optNoCache) {
   }
 
   if (this.config.bounds) {
+    var containerBounds = this.handler_.getTargetBounds(optNoCache);
+    var overflowX = this.elementBounds_.width > containerBounds.width;
+    var overflowY = this.elementBounds_.height > containerBounds.height;
+
+    // @todo: Make inverting bounds for different bound targets possible
+
     this.handler_.setBounds(
-      this.config.bounds.x + this.positionOffset_.x,
-      this.config.bounds.x + this.config.bounds.width - (this.elementBounds_.width - this.positionOffset_.x),
-      this.config.bounds.y + this.positionOffset_.y,
-      this.config.bounds.y + this.config.bounds.height - (this.elementBounds_.height - this.positionOffset_.y)
+      // min x
+      overflowX
+        ? this.positionOffset_.x + containerBounds.width - this.elementBounds_.width
+        : this.config.bounds.x + this.positionOffset_.x,
+
+      // max x
+      overflowX
+        ? this.positionOffset_.x
+        : (this.config.bounds.x + this.config.bounds.width) - (this.elementBounds_.width - this.positionOffset_.x),
+
+      // min y
+      overflowY
+        ? this.positionOffset_.y + containerBounds.height - this.elementBounds_.height
+        : this.config.bounds.y + this.positionOffset_.y,
+
+      // max y
+      overflowY
+        ? this.positionOffset_.y
+        : (this.config.bounds.y + this.config.bounds.height) - (this.elementBounds_.height - this.positionOffset_.y)
     );
   }
 };

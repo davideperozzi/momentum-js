@@ -4,15 +4,16 @@ const connect = require('gulp-connect');
 const gulpSequence = require('gulp-sequence');
 const closure = require('dj-gulp-tasks/closure');
 
-closure.deps({
+// Configs
+const depsConfig = {
   'output': './etc/momentum.deps.js',
   'prefix': '../../../../',
   'files': [
     './src/**/*.js'
   ]
-});
+};
 
-closure.compile({
+const mainBuildConfig = {
   'output': './dist/momentum.min.js',
   'files': [
     './node_modules/google-closure-library/closure/goog/base.js',
@@ -24,9 +25,9 @@ closure.compile({
       './etc/momentum.externs.js'
     ]
   }
-}, 'main');
+};
 
-closure.compile({
+const debugBuildConfig = {
   'output': './dist/debug/momentum.min.js',
   'files': [
     './node_modules/google-closure-library/closure/goog/base.js',
@@ -38,12 +39,20 @@ closure.compile({
       './etc/momentum.externs.js'
     ]
   }
-}, 'debug');
+};
 
+gulp.task('js-dist-main-build', () => closure.distCompile(mainBuildConfig));
+gulp.task('js-dist-debug-build', () => closure.distCompile(debugBuildConfig));
+gulp.task('js-deps-build', () => closure.depsBuild(depsConfig));
+gulp.task('js-deps-watch', ['js-deps-build'], () => {
+    return closure.depsWatch(depsConfig, () => gulp.start('js-deps-build'))
+});
+
+// Tasks
 gulp.task('compress-js', () => {
-	gulp.src('./dist/momentum.min.js')
-	 .pipe(gzip())
-	 .pipe(gulp.dest('./dist/'));
+  gulp.src('./dist/momentum.min.js')
+   .pipe(gzip())
+   .pipe(gulp.dest('./dist/'));
 
   gulp.src('./dist/debug/momentum.min.js')
    .pipe(gzip())
@@ -51,13 +60,14 @@ gulp.task('compress-js', () => {
 });
 
 gulp.task('build', gulpSequence(
-  'dj-closure-compile-main',
-  'dj-closure-compile-debug',
+  'js-dist-main-build',
+  'js-dist-debug-build',
   'compress-js'
 ));
 
 gulp.task('server', () => {
   return connect.server({
+    host: '0.0.0.0',
     root: ['./demos', './'],
     livereload: true,
     port: 8000
@@ -65,7 +75,7 @@ gulp.task('server', () => {
 });
 
 gulp.task('start', () => {
-	gulp.start('dj-closure-deps-watch', 'server');
+  gulp.start('js-deps-watch', 'server');
 });
 
 gulp.task('default', ['build']);

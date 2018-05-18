@@ -84,12 +84,8 @@
 
 			var dragger = new momentum.Draggable(dragElement, {
 				container: containerElement,
-				containerBounds: true,
-				resizeUpdate: true,
-				autoAnchor: true,
-				threshold: 1,
-				offsetFriction: 0.1,
-				restitution: -0.6,
+				elementBounds: 'container',
+				offsetFriction: 0.1
 			});
 
 			dragImage.onload = function() {

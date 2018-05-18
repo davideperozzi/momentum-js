@@ -44,6 +44,12 @@ momentum.Handler = function(optTarget) {
    * @private
    * @type {momentum.Coordinate}
    */
+  this.lastDownPosition_ = new momentum.Coordinate();
+
+  /**
+   * @private
+   * @type {momentum.Coordinate}
+   */
   this.lastPosition_ = new momentum.Coordinate();
 
   /**
@@ -108,6 +114,12 @@ momentum.Handler = function(optTarget) {
    * @private
    * @type {boolean}
    */
+  this.movedSinceUserDown_ = false;
+
+  /**
+   * @private
+   * @type {boolean}
+   */
   this.allowDecelerating_ = false;
 
   /**
@@ -145,6 +157,12 @@ momentum.Handler = function(optTarget) {
    * @type {Function}
    */
   this.downCallback_ = null;
+
+  /**
+   * @private
+   * @type {Function}
+   */
+  this.preventMoveCheck_ = null;
 
   /**
    * @private
@@ -283,6 +301,14 @@ momentum.Handler.prototype.setMaxVelocity = function(maxVelocity) {
 
 /**
  * @export
+ * @param {Function} fnc
+ */
+momentum.Handler.prototype.setPreventMoveCheck = function(fnc) {
+  this.preventMoveCheck_ = fnc;
+};
+
+/**
+ * @export
  * @return {momentum.Coordinate}
  */
 momentum.Handler.prototype.getFriction = function() {
@@ -319,6 +345,14 @@ momentum.Handler.prototype.getRestitution = function() {
  */
 momentum.Handler.prototype.getMaxVelocity = function() {
   return this.maxVelocity_;
+};
+
+/**
+ * @export
+ * @return {Function}
+ */
+momentum.Handler.prototype.getPreventMoveCheck = function() {
+  return this.preventMoveCheck_;
 };
 
 /**
@@ -364,11 +398,19 @@ momentum.Handler.prototype.setPosition = function(x, y, optReset) {
 };
 
 /**
+ * @private
+ * @return {boolean}
+ */
+momentum.Handler.prototype.hasTouch_ = function() {
+  return !!('ontouchstart' in window || navigator.msMaxTouchPoints);
+};
+
+/**
  * @export
  * @suppress {checkTypes}
  */
 momentum.Handler.prototype.init = function() {
-  if ('ontouchstart' in window || navigator.msMaxTouchPoints) {
+  if (this.hasTouch_()) {
     this.currentListenerMap_ = {
       'touchend': {
         'target': this.target_,
@@ -550,6 +592,8 @@ momentum.Handler.prototype.handleUserDown_ = function(event) {
   this.allowDecelerating_ = false;
 
   // Set initial start values
+  this.lastDownPosition_.x = position.x;
+  this.lastDownPosition_.y = position.y;
   this.startPosition_.x = this.position_.x = position.x;
   this.startPosition_.y = this.position_.y = position.y;
   this.startTime_ = Date.now();
@@ -585,19 +629,36 @@ momentum.Handler.prototype.addTrackingPoint_ = function() {
 
 /**
  * @private
+ * @param {number} movedX
+ * @param {number} movedY
+ * @return {boolean}
+ */
+momentum.Handler.prototype.preventMove_ = function(movedX, movedY) {
+  return this.preventMoveCheck_
+    ? this.preventMoveCheck_(movedX, movedY, this.hasTouch_())
+    : false;
+};
+
+/**
+ * @private
  * @param {Event} event
  */
 momentum.Handler.prototype.handleUserMove_ = function(event) {
   if (this.dragging_) {
-    event.preventDefault();
-    event.stopPropagation();
-
     var position = this.getEventPosition_(event);
+    var movedX = Math.abs(this.lastDownPosition_.x - position.x);
+    var movedY = Math.abs(this.lastDownPosition_.y - position.y);
 
-    this.position_.x = position.x;
-    this.position_.y = position.y;
+    if ( ! this.preventMove_(movedX, movedY) || this.movedSinceUserDown_) {
+      this.movedSinceUserDown_ = true;
+      event.stopPropagation();
+      event.preventDefault();
 
-    this.positionUpdated_();
+      this.position_.x = position.x;
+      this.position_.y = position.y;
+
+      this.positionUpdated_();
+    }
   }
 };
 
@@ -631,6 +692,10 @@ momentum.Handler.prototype.updateTrackingPoints_ = function() {
  * @param {Event} event
  */
 momentum.Handler.prototype.handleUserUp_ = function(event) {
+  this.lastDownPosition_.x = 0;
+  this.lastDownPosition_.y = 0;
+  this.movedSinceUserDown_ = false;
+
   if (this.dragging_) {
     this.dragging_ = false;
     this.allowDecelerating_ = true;
@@ -680,6 +745,18 @@ momentum.Handler.prototype.clearStartProperties_ = function() {
 
 /**
  * @private
+ * @param {number} num
+ * @param {number} dec
+ * @return {number}
+ */
+momentum.Handler.prototype.roundDecimal_ = function(num, dec) {
+  var desc = parseInt(1 + '0'.repeat(dec), 10);
+
+  return Math.round(num * desc) / desc;
+};
+
+/**
+ * @private
  */
 momentum.Handler.prototype.applyBounds_ = function() {
   if (this.hasBounds_) {
@@ -702,13 +779,13 @@ momentum.Handler.prototype.applyBounds_ = function() {
           this.activeOffsetFriction_.x = 0;
         }
 
-        var boundDiffMinX = 0;
-        var boundDiffMaxX = 0;
+        var boundDiffMinX = this.roundDecimal_(this.bounds_.minX - this.position_.x, 2);
+        var boundDiffMaxX = this.roundDecimal_(this.bounds_.maxX - this.position_.x, 2);
 
-        if ((boundDiffMinX = this.bounds_.minX - this.position_.x) > 0) {
+        if (boundDiffMinX > 0) {
           this.boundOverflow_.x = boundDiffMinX;
         }
-        else if ((boundDiffMaxX = this.bounds_.maxX - this.position_.x) < 0) {
+        else if (boundDiffMaxX < 0) {
           this.boundOverflow_.x = boundDiffMaxX;
         }
         else {
@@ -736,13 +813,13 @@ momentum.Handler.prototype.applyBounds_ = function() {
           this.activeOffsetFriction_.y = 0;
         }
 
-        var boundDiffMinY = 0;
-        var boundDiffMaxY = 0;
+        var boundDiffMinY = this.roundDecimal_(this.bounds_.minY - this.position_.y, 2);
+        var boundDiffMaxY = this.roundDecimal_(this.bounds_.maxY - this.position_.y, 2);
 
-        if ((boundDiffMinY = this.bounds_.minY - this.position_.y) > 0) {
+        if (boundDiffMinY > 0) {
           this.boundOverflow_.y = boundDiffMinY;
         }
-        else if ((boundDiffMaxY = this.bounds_.maxY - this.position_.y) < 0) {
+        else if (boundDiffMaxY < 0) {
           this.boundOverflow_.y = boundDiffMaxY;
         }
         else {
@@ -844,8 +921,13 @@ momentum.Handler.prototype.decelerate_ = function() {
   // Notify listeners and apply bounds
   this.positionUpdated_();
 
-  if (Math.abs(this.lastVelocity_.x) > 0 || Math.abs(this.lastVelocity_.y) > 0 ||
-    this.boundOverflow_.x != 0 || this.boundOverflow_.y != 0) {
+  // Round velocity, so it gets canceled. This is done solarge  decimal numbers
+  // will be sorted out. The user wouldn't even notice translation with decimal
+  // digits this large.
+  var velX = this.roundDecimal_(Math.abs(this.lastVelocity_.x), 2);
+  var velY = this.roundDecimal_(Math.abs(this.lastVelocity_.y), 2);
+
+  if (velX > 0 || velX > 0 || this.boundOverflow_.x != 0 || this.boundOverflow_.y != 0) {
     this.requestAnimationFrame_(this.decelerate_, this);
   }
   else {

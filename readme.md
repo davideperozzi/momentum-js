@@ -59,6 +59,7 @@ http://momentum.davide-perozzi.de/
 | onDown | Function | null | Callback which will be called if the user hits the element before the drag. Whether you return true or false determimes if the drag will be accepted. If you want to **preserve the default behaviour** you should **return the "hit" parameter**. Parameter list: hit, cursorX, cursorY, elementX, elementY, elementWidth, elementHeight |
 | onMove | Function | null | This will be triggered before the element is going to be moved. At this point the element does **not** have the latest translation. You can return an coordinate object like "{x: number, y: number}" to manipulate the position of the element. Parameter list: posX, posY, velX, velY. |
 | onTranslate | Function | null | This will be called if the translation settled. Parameter list:  elementX, elementY, elementWidth, elementHeight, elementBounds |
+| preventMove | Function | null | A function which needs to return wheter true or false to prevent the movement. This can be useful to add a move threshold. Paramter list: movedX, movedY, isTouchDevice
 
 ## License
 momentum.js is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT).

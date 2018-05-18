@@ -13,6 +13,7 @@
  *     width: number,
  *     height: number
  *   }|undefined),
+ *   preventMove: (Function|undefined),
  *   autoAnchor: (boolean|undefined),
  *   anchorX: (number|undefined),
  *   anchorY: (number|undefined),
@@ -64,6 +65,16 @@ dat.GUI.prototype.domElement;
  * @return {dat.GUI.Controller}
  */
 dat.GUI.prototype.add = function(obj, name, min, max){};
+
+/**
+ * @public
+ */
+dat.GUI.prototype.close = function(){};
+
+/**
+ * @public
+ */
+dat.GUI.prototype.open = function(){};
 
 /**
  * @public
