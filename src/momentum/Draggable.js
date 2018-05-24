@@ -26,7 +26,7 @@ momentum.Draggable = function(element, optConfig) {
    * @type {MomentumDraggableConfig}
    */
   this.defaults_ = {
-    // @depcrecated: containerBounds is deprecated and will be removed in the future.
+    // @deprecated: containerBounds is deprecated and will be removed in the future.
     //               Use elementBounds instead
     //
     // containerBounds: true,
@@ -157,29 +157,6 @@ momentum.Draggable.prototype.updateSettings = function() {
   }
 };
 
-momentum.Draggable.prototype._updateBounds = function(optNoCache) {
-  if (this.config.bounds) {
-    this.handler_.setBounds(
-      this.config.bounds.x + this.positionOffset_.x,
-      this.config.bounds.x + this.config.bounds.width - (this.elementBounds_.width - this.positionOffset_.x),
-      this.config.bounds.y + this.positionOffset_.y,
-      this.config.bounds.y + this.config.bounds.height - (this.elementBounds_.width - this.positionOffset_.y)
-    );
-  }
-  else if (this.config.containerBounds) {
-    var containerBounds = this.handler_.getTargetBounds(optNoCache);
-    var overflowX = this.elementBounds_.width > containerBounds.width;
-    var overflowY = this.elementBounds_.height > containerBounds.height;
-
-    this.handler_.setBounds(
-      overflowX ? this.positionOffset_.x + containerBounds.width - this.elementBounds_.width : this.positionOffset_.x,
-      overflowX ? this.positionOffset_.x : containerBounds.width - (this.elementBounds_.width - this.positionOffset_.x),
-      overflowY ? this.positionOffset_.y + containerBounds.height - this.elementBounds_.height : this.positionOffset_.y,
-      overflowY ? this.positionOffset_.y : containerBounds.height - (this.elementBounds_.height - this.positionOffset_.y)
-    );
-  }
-};
-
 /**
  * @export
  * @param {boolean=} optNoCache
@@ -213,14 +190,21 @@ momentum.Draggable.prototype.updateBounds = function(optNoCache) {
         // Use the bounds of the element and change the position of the object.
         // This ensures the scroll position is included in the calculations
         var bounds = this.config.elementBounds.getBoundingClientRect();
-        var offset = momentum.utils.getPageOffset(/** @type {Element} */ (
+        var targetOffset = momentum.utils.getPageOffset(this.handler_.getTarget());
+        var elementOffset = momentum.utils.getPageOffset(/** @type {Element} */ (
           this.config.elementBounds
         ));
 
-        bounds.left = bounds.x = offset.x;
-        bounds.top = bounds.y = offset.y;
+        // Getting relative position to the handler target
+        elementOffset.x -= targetOffset.x;
+        elementOffset.y -= targetOffset.y;
 
-        this.config.bounds = bounds;
+        this.config.bounds = {
+          x: elementOffset.x,
+          y: elementOffset.y,
+          width: bounds.width,
+          height: bounds.height
+        };
       }
     }
   }
