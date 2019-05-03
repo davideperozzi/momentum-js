@@ -13,10 +13,12 @@ momenutm.js is a small (plainly written) JavaScript plugin, giving you the abili
 To use momentum.js you have to include the momentum.js file from the dist folder. If your server supports serving compressed files you can also put the compressed **gz** file in the same directory as the js file. This improves the loading time by **more than 50%**.
 It also comes as a **npm** module:
 ```bash
-npm install momentum.js
+npm install --save momentum.js
 ```
-Then load it via Webpack using the [exports-loader](https://github.com/webpack-contrib/exports-loader):
 
+## Usage
+### Webpack
+To load it via Webpack, you could use the [exports-loader](https://github.com/webpack-contrib/exports-loader) like this:
 ```js
 import momentum from 'exports-loader?momentum!momentum.js/dist/momentum.min.js'
 ```
