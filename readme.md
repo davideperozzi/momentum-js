@@ -15,6 +15,13 @@ It also comes as a **npm** module:
 ```bash
 npm install momentum.js
 ```
+Then load it via Webpack using the [exports-loader](https://github.com/webpack-contrib/exports-loader):
+
+```js
+import momentum from 'exports-loader?momentum!momentum.js/dist/momentum.min.js'
+```
+
+
 
 ## How to use the Draggable
 
