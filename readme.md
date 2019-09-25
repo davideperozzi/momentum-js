@@ -1,9 +1,4 @@
-<p align="center">
-  <a href="https://www.npmjs.com/package/momentum.js" target="_blank"><img src="https://badge.fury.io/js/momentum.js.svg"></a>
-  <a href="https://opensource.org/licenses/MIT" target="_blank"><img src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
-</p>
-
-## About momentum.js
+# momentum.js <a href="https://www.npmjs.com/package/momentum.js" target="_blank"><img src="https://badge.fury.io/js/momentum.js.svg"></a> <a href="https://opensource.org/licenses/MIT" target="_blank"><img src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
 
 momenutm.js is a small (plainly written) JavaScript plugin, giving you the ability to add a "throw momentum effect" to anything displayed on your webpage. It can be a handy alternative to the Draggable extension of the greensock animation framework. Besides desktop devices it also works for mobile and touch devices.
 
