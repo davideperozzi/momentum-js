@@ -11,13 +11,11 @@ npm install --save momentum.js
 ```
 
 ## Usage
-### Webpack
-To load it via Webpack, you could use the [exports-loader](https://github.com/webpack-contrib/exports-loader) like this:
+You can use this package by simply including it like this:
+
 ```js
-import momentum from 'exports-loader?momentum!momentum.js/dist/momentum.min.js'
+import { Draggable, Handler, Rotatable } from 'momentum.js';
 ```
-
-
 
 ## How to use the Draggable
 
