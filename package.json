@@ -1,7 +1,8 @@
 {
   "name": "momentum.js",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Add a momentum effect to elements",
+  "main": "dist/index.js",
   "keywords": [
     "javascript",
     "momentum",
@@ -19,10 +20,7 @@
       "url": "http://davide-perozzi.de/"
     }
   ],
-  "license": {
-    "type": "MIT",
-    "url": "http://www.opensource.org/licenses/mit-license.php"
-  },
+  "license": "MIT",
   "devDependencies": {
     "compression": "^1.7.2",
     "dat.gui": "^0.7.2",
@@ -33,6 +31,7 @@
     "gulp-closure-deps": "^0.4.0",
     "gulp-connect": "^5.5.0",
     "gulp-gzip": "^1.4.2",
-    "gulp-sequence": "^1.0.0"
+    "gulp-sequence": "^1.0.0",
+    "natives": "^1.1.6"
   }
 }

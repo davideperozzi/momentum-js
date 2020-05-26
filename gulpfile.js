@@ -23,9 +23,24 @@ const mainBuildConfig = {
     'closure_entry_point': 'momentum',
     'externs': [
       './etc/momentum.externs.js'
+    ],
+  }
+};
+
+const moduleBuildConfig = {
+  'output': './dist/index.js',
+  'files': [
+    './node_modules/google-closure-library/closure/goog/base.js',
+    './src/momentum/**/*.js'
+  ],
+  'config': {
+    'closure_entry_point': 'momentum.module',
+    'externs': [
+      './etc/momentum.externs.js'
     ]
   }
 };
+
 
 const debugBuildConfig = {
   'output': './dist/debug/momentum.min.js',
@@ -42,6 +57,7 @@ const debugBuildConfig = {
 };
 
 gulp.task('js-dist-main-build', () => closure.distCompile(mainBuildConfig));
+gulp.task('js-dist-module-build', () => closure.distCompile(moduleBuildConfig));
 gulp.task('js-dist-debug-build', () => closure.distCompile(debugBuildConfig));
 gulp.task('js-deps-build', () => closure.depsBuild(depsConfig));
 gulp.task('js-deps-watch', ['js-deps-build'], () => {
@@ -61,6 +77,7 @@ gulp.task('compress-js', () => {
 
 gulp.task('build', gulpSequence(
   'js-dist-main-build',
+  'js-dist-module-build',
   'js-dist-debug-build',
   'compress-js'
 ));

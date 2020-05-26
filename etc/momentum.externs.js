@@ -147,3 +147,11 @@ dat.GUI.Folder = function(){};
  * @return {dat.GUI.Folder}
  */
 dat.GUI.Folder.prototype.open = function(){};
+
+
+/**
+ * @type {{ exports: Object }}
+ */
+var module = {
+  exports: {}
+};
