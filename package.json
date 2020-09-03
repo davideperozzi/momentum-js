@@ -26,7 +26,7 @@
     "dat.gui": "^0.7.2",
     "dj-gulp-tasks": "^1.1.0",
     "google-closure-compiler": "^20180506.0.0",
-    "google-closure-library": "^20180506.0.0",
+    "google-closure-library": "^20190301.0.0",
     "gulp": "^3.9.1",
     "gulp-closure-deps": "^0.4.0",
     "gulp-connect": "^5.5.0",
