@@ -27,7 +27,7 @@
     "dj-gulp-tasks": "^1.1.0",
     "google-closure-compiler": "^20180506.0.0",
     "google-closure-library": "^20180506.0.0",
-    "gulp": "^3.9.1",
+    "gulp": "^4.0.2",
     "gulp-closure-deps": "^0.4.0",
     "gulp-connect": "^5.5.0",
     "gulp-gzip": "^1.4.2",
